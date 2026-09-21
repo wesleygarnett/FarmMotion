@@ -4,7 +4,7 @@
 
 Ever wish farm simulator had force feedback on steering wheels? This mod fixes that. Feel every bump in the road and field, and customize how strong you want to feel it.
 
-For **Farming Simulator 25 on Windows**. Adds vehicle movement feedback to compatible wheels and rumble controllers.
+For **Farming Simulator 25 on Windows**. Tested on Moza R3. Beta release.
 
 ## Downloads
 
