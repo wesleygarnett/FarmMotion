@@ -6,7 +6,7 @@ A small Windows companion that turns **Farming Simulator 25** vehicle movement i
 
 **0.3.0 preview · Windows x64 · Local-player telemetry · GPL-2.0-only**
 
-![Dark WPF UI dashboard](dashboard.png)
+![Dark WPF UI dashboard](dashboard-compact.png)
 
 ## Download and install
 
@@ -14,7 +14,7 @@ Download the portable Windows ZIP from [Releases](https://github.com/wesleygarne
 
 1. Extract `FarmMotion-v0.3.0-win-x64.zip` into a permanent writable folder. Keep all included DLLs beside the app; WPF UI and controller rumble need them.
 2. With FS25 closed, copy the included **`FS25_FarmMotionTelemetry.zip`** to `Documents\My Games\FarmingSimulator2025\mods`. Keep this inner ZIP zipped. If your Documents folder is redirected, use the mods folder beside your game's `log.txt`. Keep a copy of an older mod before replacing it.
-3. Launch **`FarmMotionUI.exe`**. Select your wheel and/or rumble controller. A single eligible device is selected automatically on first use; subsequent launches remember the selection.
+3. Launch **`FarmMotion.exe`**. Select your wheel and/or rumble controller. A single eligible device is selected automatically on first use; subsequent launches remember the selection.
 4. Start FS25, enable **FarmMotion Telemetry** for your save, and enter a vehicle. Check that packet counts increase.
 5. Output is enabled by default and waits for fresh active telemetry and game focus. Start with low strength, then return to the game. **Disable output** disables both devices; **Enable output** resumes them.
 
@@ -91,7 +91,7 @@ WPF UI 4.3.0 and compatible .NET Framework dependencies are pinned and hash-chec
 
 **Upgrading from 0.2.0:** extract the complete 0.3.0 package manually into a new folder. The older updater does not accept the new WPF dependency files. Existing preferences and tuning are loaded from the same local application-data folder; re-save Start with Windows if moving the app.
 
-`FarmMotion.exe --self-test` runs the checks; `--list-wheels` lists devices and `--monitor` runs console diagnostics. Everyday use should launch `FarmMotionUI.exe`.
+`FarmMotion.exe --self-test` runs the checks; `--list-wheels` lists devices and `--monitor` runs console diagnostics. Everyday use should launch `FarmMotion.exe`.
 
 Run `release.ps1` from a committed checkout to produce the portable ZIP, mod ZIP, committed-source ZIP and checksums. See [contributing](CONTRIBUTING.md), [release procedure](RELEASING.md), [changelog](CHANGELOG.md), and [security](SECURITY.md).
 
@@ -101,7 +101,7 @@ GPL-2.0-only. The Lua exporter is adapted from Mhytee's Trueforce-For-All v0.2.6
 
 ## ModHub validation
 
-The bundled telemetry mod is now 1.0.0.0 (descriptor 113) and passes all 15 GIANTS TestRunner modules. See [fixes and remaining submission work](modhub-test-2026-09-21/FIXES.md). Local-player multiplayer isolation is implemented but real multiplayer playtesting remains outstanding. The mod icon is a code-drawn placeholder, not approved ModHub artwork. Reinstall the bundled telemetry ZIP to use the updated exporter.
+The bundled telemetry mod is now 1.0.0.2 (descriptor 113) and passes all 15 GIANTS TestRunner modules. See [fixes and remaining submission work](TESTING.md). Local-player multiplayer isolation is implemented but real multiplayer playtesting remains outstanding. The mod icon is a code-drawn placeholder, not approved ModHub artwork. Reinstall the bundled telemetry ZIP to use the updated exporter.
 
 ### Gentle driving with strong impacts
 

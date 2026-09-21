@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.1
+
+- One public app executable: FarmMotion.exe opens the WPF interface. Console diagnostics move to developer-only FarmMotion.Diagnostics.exe.
+- Release packaging and updater validate the single-executable layout.
+- Upgrading from 0.4.0 or earlier requires a manual download into a fresh folder; saved tuning is preserved. Update shortcuts and re-enable Start with Windows in the new app if used.
+
+
 ## 0.4.0 beta candidate / telemetry mod 1.0.0.2
 
 - App-instance marker restores mod reconnects after app restarts without relying on IO error returns. Live restart validation remains pending.
@@ -58,4 +65,4 @@ First packaged Windows preview release.
 
 The bundled telemetry mod retains version **0.2.0.0** from its separate development history. The desktop release is **0.1.0**; protocol v1 and surface protocol v1 are unchanged.
 
-This is a preview: live force cadence, wheel-driver behavior, and recovery after restarting the companion during a game still require hardware validation. See [review notes](docs/REVIEW.md).
+This is a preview: live force cadence, wheel-driver behavior, and recovery after restarting the companion during a game still require hardware validation. See [review notes](docs/TESTING.md).

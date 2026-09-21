@@ -13,7 +13,7 @@ namespace FarmMotion {
         public const string ReleasesPage="https://github.com/wesleygarnett/FarmMotion/releases";
         const long MaxDownload=150*1024*1024;
         internal static readonly string[] WpfRuntimeFiles={"Wpf.Ui.dll","Wpf.Ui.Abstractions.dll","System.Memory.dll","System.Buffers.dll","System.Numerics.Vectors.dll","System.Runtime.CompilerServices.Unsafe.dll"};
-        static readonly HashSet<string> TopFiles=new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "FarmMotionUI.exe","FarmMotion.exe","FarmMotionUI.exe.config","FarmMotion.exe.config","SDL3.dll","SDL3-LICENSE.txt","FS25_FarmMotionTelemetry.zip","LICENSE","THIRD_PARTY.md","README.md","CHANGELOG.md","SECURITY.md","CONTRIBUTING.md" };
+        static readonly HashSet<string> TopFiles=new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "FarmMotion.exe","FarmMotion.exe.config","SDL3.dll","SDL3-LICENSE.txt","FS25_FarmMotionTelemetry.zip","LICENSE","THIRD_PARTY.md","README.md","CHANGELOG.md","SECURITY.md","CONTRIBUTING.md" };
         static AppUpdate() { foreach(string name in WpfRuntimeFiles) TopFiles.Add(name); TopFiles.Add("WPF-UI-LICENSE.md"); TopFiles.Add("MICROSOFT-RUNTIME-LICENSE.txt"); }
         static byte[] Fetch(string url,string token,bool binary,long limit) {
             for(int hop=0;hop<6;hop++) {
@@ -89,11 +89,11 @@ namespace FarmMotion {
                 if(!Allowed(name)) throw new IOException("Unexpected update archive file: "+name);
                 Directory.CreateDirectory(Path.GetDirectoryName(path)); using(var input=entry.Open()) using(var output=File.Create(path)) input.CopyTo(output);
             }
-            foreach(string name in new[]{"FarmMotionUI.exe","FarmMotion.exe","FarmMotionUI.exe.config","FarmMotion.exe.config","SDL3.dll","SDL3-LICENSE.txt"}) if(!File.Exists(Path.Combine(target,name))) throw new IOException("Update package is incomplete: "+name);
+            foreach(string name in new[]{"FarmMotion.exe","FarmMotion.exe.config","SDL3.dll","SDL3-LICENSE.txt"}) if(!File.Exists(Path.Combine(target,name))) throw new IOException("Update package is incomplete: "+name);
             foreach(string name in WpfRuntimeFiles) if(!File.Exists(Path.Combine(target,name))) throw new IOException("Update package is missing a WPF runtime: "+name);
         }
         static bool Allowed(string name) { if(TopFiles.Contains(name)) return true; string unix=name.Replace('\\','/'); return (unix.StartsWith("docs/",StringComparison.OrdinalIgnoreCase)||unix.StartsWith("assets/",StringComparison.OrdinalIgnoreCase)) && (unix.EndsWith(".md",StringComparison.OrdinalIgnoreCase)||unix.EndsWith(".png",StringComparison.OrdinalIgnoreCase)||unix.EndsWith(".ico",StringComparison.OrdinalIgnoreCase)); }
-        internal static void ValidateVersion(string folder,string release) { foreach(string name in new[]{"FarmMotionUI.exe","FarmMotion.exe"}) { string actual=FileVersionInfo.GetVersionInfo(Path.Combine(folder,name)).ProductVersion; if(CompareVersions(actual,release)!=0) throw new IOException("Downloaded executable version does not match the release."); } }
+        internal static void ValidateVersion(string folder,string release) { foreach(string name in new[]{"FarmMotion.exe"}) { string actual=FileVersionInfo.GetVersionInfo(Path.Combine(folder,name)).ProductVersion; if(CompareVersions(actual,release)!=0) throw new IOException("Downloaded executable version does not match the release."); } }
         static void RejectReparse(string path) { for(string current=Path.GetFullPath(path);!string.IsNullOrEmpty(current);current=Path.GetDirectoryName(current)) if((File.Exists(current)||Directory.Exists(current))&&(File.GetAttributes(current)&FileAttributes.ReparsePoint)!=0) throw new IOException("Update paths cannot use junctions or symbolic links."); }
         public static void BeginInstall(string folder) {
             string target=Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath);
@@ -103,10 +103,10 @@ namespace FarmMotion {
         public static int Apply(string[] args) {
             if(args.Length!=3) throw new ArgumentException("Invalid updater arguments."); int pid=int.Parse(args[1]);
             string stage=AppDomain.CurrentDomain.BaseDirectory; string archive=Path.Combine(stage,"package.zip"); if(new FileInfo(archive).Length>MaxDownload) throw new IOException("Staged update is too large."); byte[] data=File.ReadAllBytes(archive); if(Hash(data)!=File.ReadAllText(Path.Combine(stage,"sha256.txt"))) throw new IOException("Staged update checksum mismatch.");
-            string target=Path.GetFullPath(args[2]); if(!File.Exists(Path.Combine(target,"FarmMotionUI.exe"))) throw new IOException("Update target is not a FarmMotion folder.");
+            string target=Path.GetFullPath(args[2]); if(!File.Exists(Path.Combine(target,"FarmMotion.exe"))) throw new IOException("Update target is not a FarmMotion folder.");
             try { using(var parent=Process.GetProcessById(pid)) if(!parent.WaitForExit(30000)) throw new IOException("FarmMotion has not closed. Update cancelled."); } catch(ArgumentException) { }
             string payload=Path.Combine(stage,"verified"); Extract(data,payload); ValidateVersion(payload,File.ReadAllText(Path.Combine(stage,"version.txt")));
-            InstallPayload(payload,target,delegate { using(var child=Process.Start(new ProcessStartInfo(Path.Combine(target,"FarmMotionUI.exe"),"--after-update") { WorkingDirectory=target,UseShellExecute=true })) { if(child==null||child.WaitForExit(1500)) throw new IOException("The updated application exited during startup; previous files restored."); } }); return 0;
+            InstallPayload(payload,target,delegate { using(var child=Process.Start(new ProcessStartInfo(Path.Combine(target,"FarmMotion.exe"),"--after-update") { WorkingDirectory=target,UseShellExecute=true })) { if(child==null||child.WaitForExit(1500)) throw new IOException("The updated application exited during startup; previous files restored."); } }); return 0;
         }
         internal static void InstallPayload(string payload,string target,Action restart) {
             RejectReparse(target);

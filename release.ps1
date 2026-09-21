@@ -11,7 +11,7 @@ New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
 $portable = Join-Path $stage 'portable'
 New-Item -ItemType Directory -Path $portable | Out-Null
-foreach ($name in @('FarmMotionUI.exe', 'FarmMotionUI.exe.config', 'FarmMotion.exe', 'FarmMotion.exe.config', 'SDL3.dll', 'SDL3-LICENSE.txt', 'FS25_FarmMotionTelemetry.zip', 'LICENSE', 'THIRD_PARTY.md', 'README.md')) {
+foreach ($name in @('FarmMotion.exe', 'FarmMotion.exe.config', 'SDL3.dll', 'SDL3-LICENSE.txt', 'FS25_FarmMotionTelemetry.zip', 'LICENSE', 'THIRD_PARTY.md', 'README.md')) {
     Copy-Item -LiteralPath (Join-Path $stage $name) -Destination $portable
 }
 foreach($name in @('Wpf.Ui.dll','Wpf.Ui.Abstractions.dll','System.Memory.dll','System.Buffers.dll','System.Numerics.Vectors.dll','System.Runtime.CompilerServices.Unsafe.dll','WPF-UI-LICENSE.md','MICROSOFT-RUNTIME-LICENSE.txt')) {
@@ -21,7 +21,8 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'CHANGELOG.md'), (Join-Path $PSS
 New-Item -ItemType Directory -Path (Join-Path $portable 'assets') | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'assets\farmmotion.png') -Destination (Join-Path $portable 'assets')
 New-Item -ItemType Directory -Path (Join-Path $portable 'docs') | Out-Null
-foreach($doc in @('USER_GUIDE.md','dashboard-compact.png')) { Copy-Item -LiteralPath (Join-Path $PSScriptRoot ('docs\'+$doc)) -Destination (Join-Path $portable 'docs') }
+foreach($doc in @('USER_GUIDE.md','TESTING.md','RELEASING.md','dashboard-compact.png')) { Copy-Item -LiteralPath (Join-Path $PSScriptRoot ('docs\'+$doc)) -Destination (Join-Path $portable 'docs') }
+if(@(Get-ChildItem -LiteralPath $portable -Filter '*.exe').Count -ne 1 -or -not (Test-Path -LiteralPath (Join-Path $portable 'FarmMotion.exe'))) { throw 'Portable release must contain only FarmMotion.exe' }
 $binary = Join-Path $OutputDirectory "FarmMotion-v$version-win-x64.zip"
 Compress-Archive -Path (Join-Path $portable '*') -DestinationPath $binary -Force
 $mod = Join-Path $OutputDirectory 'FS25_FarmMotionTelemetry.zip'
