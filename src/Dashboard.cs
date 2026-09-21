@@ -133,7 +133,7 @@ namespace FarmMotion {
             AddSlider(controls,5,"Individual bumps",0,200,(int)(settings.Bumps*100),v=>v+" %",v=>settings.Bumps=v/100.0);
             AddSlider(controls,6,"Body movement",0,200,(int)(settings.Body*100),v=>v+" %",v=>settings.Body=v/100.0);
             AddSlider(controls,7,"Texture frequency",12,45,(int)settings.TextureFrequency,v=>v+" Hz",v=>settings.TextureFrequency=v);
-            AddSlider(controls,8,"Road tyre buzz (0 = off)",0,20,(int)Math.Round(settings.RoadTexture*100),v=>(v*.25).ToString("0.##")+" % of cap",v=>settings.RoadTexture=v/100.0);
+            AddSlider(controls,8,"Road tire buzz (0 = off)",0,20,(int)Math.Round(settings.RoadTexture*100),v=>(v*.25).ToString("0.##")+" % of cap",v=>settings.RoadTexture=v/100.0);
             AddSlider(controls,9,"Road buzz pitch",50,90,(int)settings.RoadFrequency,v=>v+" Hz",v=>settings.RoadFrequency=v);
             mode.DropDownStyle=ComboBoxStyle.DropDownList; mode.Items.AddRange(new object[]{"Motion-shaped v1 (previous)","Motion-shaped v2 (new)","Original 18 Hz"}); mode.SelectedIndex=settings.Original ? 2:(settings.Enhanced ? 1:0); mode.Dock=DockStyle.Fill; mode.Margin=new Padding(3,8,3,0);
             mode.SelectedIndexChanged+=delegate { lock(gate) { settings.Original=mode.SelectedIndex==2; settings.Enhanced=mode.SelectedIndex==1; feel.Reset(); issue=mode.SelectedIndex==1 ? "V2: per-wheel bumps, layered texture, gradual peak compression." : "Previous processing restored. Sliders are shared between comparison modes."; } ResetSoloChoices(); for(int i=2;i<6;i++) sliders[i].Enabled=mode.SelectedIndex!=2; };
@@ -194,12 +194,12 @@ namespace FarmMotion {
         static readonly string[] SliderHelp={
             "Sets the maximum wheel force for all effects. Raise it for stronger feedback; lower it for a lighter feel. 0% turns the force down to zero. The app caps this at 10% of the wheel's available force.",
             "Controls how strongly vehicle movement is translated into feedback. Raise it to pick up smaller movements; lower it for a calmer ride. Maximum strength still limits the final force.",
-            "Adjusts fast, fine vibration from suspension movement. Raise it for more small detail; set it to 0% to remove this layer. It does not change the separate road tyre buzz. Not used in Original 18 Hz mode.",
+            "Adjusts fast, fine vibration from suspension movement. Raise it for more small detail; set it to 0% to remove this layer. It does not change the separate road tire buzz. Not used in Original 18 Hz mode.",
             "Adjusts feedback from individual suspension bumps and rebounds. Raise it for more pronounced bumps; lower it to soften them. Not used in Original 18 Hz mode.",
             "Adjusts slower feedback from the vehicle body's vertical movement, pitch and roll. Raise it for more body motion; lower it for a steadier feel. Not used in Original 18 Hz mode.",
             "Sets the vibration rate of the fine texture layer, from 12 to 45 cycles per second (Hz). Higher values feel faster; lower values feel slower. This does not change large-bump timing or road buzz pitch. Not used in Original 18 Hz mode.",
-            "Adds a light tyre buzz while agricultural tyres roll on a detected road surface. The value is a percentage of your Maximum strength cap. Set it to 0 to turn this layer off. It fades when the vehicle stops, contact is lost, or telemetry becomes stale.",
-            "Sets the separate road tyre buzz rate, from 50 to 90 cycles per second (Hz). Higher values give a faster buzz. This only has an effect when Road tyre buzz is above zero and its road/tyre conditions are met."
+            "Adds a light tire buzz while agricultural tires roll on a detected road surface. The value is a percentage of your Maximum strength cap. Set it to 0 to turn this layer off. It fades when the vehicle stops, contact is lost, or telemetry becomes stale.",
+            "Sets the separate road tire buzz rate, from 50 to 90 cycles per second (Hz). Higher values give a faster buzz. This only has an effect when Road tire buzz is above zero and its road/tire conditions are met."
         };
         void AddSlider(TableLayoutPanel table,int row,string name,int min,int max,int value,Func<int,string> format,Action<int> change) {
             var slider=new TrackBar { Minimum=min,Maximum=max,Value=value,Dock=DockStyle.Fill,TickStyle=TickStyle.None,SmallChange=1,LargeChange=5,AutoSize=false,Margin=new Padding(3,8,3,0),AccessibleName=name };
@@ -218,7 +218,7 @@ namespace FarmMotion {
             return index==1 ? FeedbackSolo.Bumps : index==2 ? FeedbackSolo.Body : index==3 ? FeedbackSolo.Texture : index==4 ? FeedbackSolo.Road : FeedbackSolo.All;
         }
         void ResetSoloChoices() {
-            soloChoice.Items.Clear(); soloChoice.Items.AddRange(settings.Original ? new object[]{"All effects","Original movement only","Road tyre buzz only"} : new object[]{"All effects","Individual bumps only","Body movement only","Fine texture only","Road tyre buzz only"}); soloChoice.SelectedIndex=0;
+            soloChoice.Items.Clear(); soloChoice.Items.AddRange(settings.Original ? new object[]{"All effects","Original movement only","Road tire buzz only"} : new object[]{"All effects","Individual bumps only","Body movement only","Fine texture only","Road tire buzz only"}); soloChoice.SelectedIndex=0;
         }
         void ShowAppOptions() {
             if(testing) return;

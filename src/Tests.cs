@@ -10,14 +10,15 @@ namespace FarmMotion {
         static void Assert(bool ok,string name) { if(!ok) throw new Exception("FAIL: "+name); count++; Console.WriteLine("PASS: "+name); }
         static Sample S(int seq,double y) { return Sample.Parse("{\"v\":1,\"active\":true,\"session\":\"a\",\"vehicle\":\"1\",\"seq\":"+seq+",\"time\":"+(seq*0.02).ToString(System.Globalization.CultureInfo.InvariantCulture)+",\"wheels\":[{\"i\":1,\"y\":"+y.ToString(System.Globalization.CultureInfo.InvariantCulture)+"}]}"); }
         public static int Run() {
-            var defaults=new FeelSettings(); defaults.Validate(); Assert(defaults.Strength==.5,"New strength defaults to 50 percent");
+            var defaults=new FeelSettings(); defaults.Validate(); Assert(defaults.Strength==.1,"New strength defaults to 10 percent");
             defaults.Strength=1; defaults.Validate(); Assert(defaults.Strength==1,"100 percent strength survives validation");
             defaults.Strength=2; defaults.Validate(); Assert(defaults.Strength==1,"Strength over full-scale clamps to 100 percent");
             defaults.Strength=-1; defaults.Validate(); Assert(defaults.Strength==0,"Negative strength clamps to zero");
-            defaults.Strength=double.NaN; defaults.Validate(); Assert(defaults.Strength==.5,"Invalid strength restores 50 percent default");
+            defaults.Strength=double.NaN; defaults.Validate(); Assert(defaults.Strength==.1,"Invalid strength restores 10 percent default");
             Assert(Wheel.ToMagnitude(0)==0&&Wheel.ToMagnitude(.5)==5000&&Wheel.ToMagnitude(1)==10000&&Wheel.ToMagnitude(-1)==-10000,"Wheel conversion covers zero half and full force in both directions");
             Assert(Wheel.ToMagnitude(2)==10000&&Wheel.ToMagnitude(-2)==-10000&&Wheel.ToMagnitude(double.NaN)==0&&Wheel.ToMagnitude(double.PositiveInfinity)==0,"Wheel conversion bounds invalid and out of range commands");
             ReleaseTests.Run(Assert);
+            ReconnectTests.Run(Assert);
             LifecycleTests.Run(Assert);
             ControllerTests.Run(Assert);
             CompanionEngineTests.Run(Assert);
@@ -94,7 +95,7 @@ namespace FarmMotion {
                 for(int j=0;j<4;j++) exact &= current.Force(i*.02+j*.004,comparison)==frozen.Force(i*.02+j*.004,comparison);
             }
             Assert(exact,"V1 exactly matches frozen pre-update output across 4000 force samples");
-            var v2=new Feel(); var v2Settings=new FeelSettings { Enhanced=true,Texture=0,Body=0,Sensitivity=1 };
+            var v2=new Feel(); var v2Settings=new FeelSettings { Enhanced=true,Texture=0,Body=0,Bumps=1,Sensitivity=1 };
             double opposingPeak=0;
             for(int i=1;i<100;i++) { var sample=S(i,.02*Math.Sin(i*.22)); sample.Wheels[2]=-sample.Wheels[1]; v2.Push(sample,i*.02,v2Settings); opposingPeak=Math.Max(opposingPeak,Math.Abs(v2.Force(i*.02,v2Settings))); }
             Assert(opposingPeak>.001,"V2 preserves bumps from opposite-phase wheels");

@@ -12,7 +12,11 @@ namespace FarmMotion {
         }
         public static int Run() {
             count=0;
-            var frozen=new FrozenFeelV2(); var current=new FeelV2();
+            var current=new FeelV2();
+            Check(Math.Abs(FeelV2.ShapeMovement(.3,2)-.09)<1e-12 && FeelV2.ShapeMovement(1,2)==1 && FeelV2.ShapeMovement(-1,2)==-1,"curve reduces average motion while preserving full-scale signed impacts");
+            Check(FeelV2.ShapeMovement(0,2)==0 && FeelV2.ShapeMovement(2,2)==1,"curve has no idle force and bounds over-range impacts");
+            var gentle=new FeelSettings { Sensitivity=.01 }; gentle.Validate();
+            Check(gentle.Sensitivity==.01,"sub-quarter sensitivity survives validation");
             var regressionSettings=new FeelSettings { Strength=.1,Sensitivity=3,Bumps=2,Body=2,Texture=4 };
             bool regression=true,sawLimited=false,sawStale=false;
             for(int i=1;i<=4000;i++) {
@@ -20,13 +24,17 @@ namespace FarmMotion {
                 if(i%317==0) sample.Active=false;
                 if(i%113==0) sample.Wheels[1]=10;
                 regressionSettings.Texture=i%80<40 ? 4:0;
-                current.Push(sample,now); frozen.Push(sample,now);
+                current.Push(sample,now);
                 double at=now+(i%9==0 ? .16:i%7==0 ? -.01:.003);
-                double expected=frozen.Force(at,regressionSettings),actual=current.Force(at,regressionSettings);
-                regression &= expected==actual && frozen.Limited==current.Limited;
+                double actual=current.Force(at,regressionSettings);
+                regression &= !double.IsNaN(actual) && Math.Abs(actual)<=regressionSettings.Strength;
+                var rumble=current.GetRumble(at,regressionSettings,FeedbackSolo.All);
+                regression &= rumble.High<=regressionSettings.TextureLimit && rumble.Low<=1;
+                double detail=current.Force(at,regressionSettings,FeedbackSolo.Texture);
+                regression &= Math.Abs(detail)<=regressionSettings.Strength*regressionSettings.TextureLimit;
                 sawLimited |= current.Limited; sawStale |= i%9==0 && actual==0;
             }
-            Check(regression && sawLimited && sawStale,"4000 V2 outputs and limiter states exactly match frozen reference, including saturation and stale input");
+            Check(regression && sawLimited && sawStale,"4000 shaped V2 outputs respect force and texture limits across saturation, discontinuities and stale input");
             foreach(bool enhanced in new[]{false,true}) {
                 var settings=new FeelSettings { Enhanced=enhanced,Strength=.08,Texture=.8,Body=.7,Bumps=1.2,RoadTexture=.1 };
                 var feel=new Feel();

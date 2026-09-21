@@ -2,7 +2,7 @@
 
 # FarmMotion | Force feedback & rumble for Farm Simulator
 
-A small Windows companion that turns **Farming Simulator 25** vehicle movement into steering-wheel feedback: suspension bumps, body movement, fine texture and optional road tyre buzz.
+A small Windows companion that turns **Farming Simulator 25** vehicle movement into steering-wheel feedback: suspension bumps, body movement, fine texture and optional road tire buzz.
 
 **0.3.0 preview · Windows x64 · Local-player telemetry · GPL-2.0-only**
 
@@ -28,7 +28,7 @@ The **Feedback** tab has a **Basic** dropdown containing only strength and sensi
 
 | Control | Effect |
 |---|---|
-| Maximum strength | Caps total force at 0–100% of driver full-scale; defaults to 50%. |
+| Maximum strength | Caps total force at 0–100% of driver full-scale; defaults to 10%. |
 | Movement sensitivity | Makes incoming vehicle movement feel calmer or more pronounced. |
 
 The **Advanced** dropdown in Feedback contains the remaining tuning sliders, Solo buttons, Save tuning and reset controls. Device selection and rumble strength remain on **Devices**; record/replay remains on **Recordings**.
@@ -45,13 +45,13 @@ PlayStation USB is the initial compatibility target. Bluetooth rumble is opt-in 
 
 **Settings** contains **Enable output when FarmMotion starts**, **Start with Windows**, Bluetooth compatibility and release updates. Windows startup registers this copy at sign-in: keep its folder in a permanent location. Checking for updates is manual; **Include preview releases** is enabled by default and can be switched off for stable-only updates. Private GitHub releases need a token with repository Contents read access (held only in the dialog), or use **Release page**. Installation stages and verifies the package, closes the app, replaces files with rollback on copy failure, and restarts with output disabled once. Settings stay outside the app folder. Updating FarmMotion does not install the game mod. If power is lost during installation, recover the previous files from the retained `update-backup-*` folder.
 
-**Save tuning** and normal window closure save tuning to `%LOCALAPPDATA%\FarmMotion\settings.json` and device/startup-output preferences to `app-options.json` in the same folder. Reset strength & sensitivity restores only those controls to 50% / 0.25x. Updates preserve saved tuning.
+**Save tuning** and normal window closure save tuning to `%LOCALAPPDATA%\FarmMotion\settings.json` and device/startup-output preferences to `app-options.json` in the same folder. Reset strength & sensitivity restores only those controls to 10% / 0.25x. Updates preserve saved tuning.
 
 ## Feedback processing
 
 The desktop app uses **Motion-shaped V2**: per-wheel filtering, layered texture and softer peak compression. Older saved processing selections move to V2 on launch while retaining all gain and frequency settings.
 
-Road tyre buzz is separate from movement texture. It requires eligible agricultural tyres, rotation, travel speed and the game's broad road-class ground contact. Its 50–90 Hz pitch is a commanded software carrier; actual reproduction depends on the output loop and wheel driver. The road amount is a percentage of the selected strength cap, not driver full-scale. Road buzz uses remaining force headroom so larger bumps retain priority. This is not a precise asphalt-material detector.
+Road tire buzz is separate from movement texture. Its amount adjusts in 0.01% steps; focus the slider and use the arrow keys for precise adjustment below 1%. It requires eligible agricultural tires, rotation, travel speed and the game's broad road-class ground contact. Its 50–90 Hz pitch is a commanded software carrier; actual reproduction depends on the output loop and wheel driver. The road amount is a percentage of the selected strength cap, not driver full-scale. Road buzz uses remaining force headroom so larger bumps retain priority. This is not a precise asphalt-material detector.
 
 The graph shows incoming suspension and acceleration, a force preview, and commanded force—not measured wheel torque. This app synthesizes tactile movement feedback; it is not Logitech TrueForce or a physical steering-rack simulation.
 
@@ -68,7 +68,7 @@ Recordings are local and never uploaded. Files larger than 64 MB are rejected. R
 | no device detected | Check power, USB and the wheel driver, then Refresh wheels. Detection only lists attached force-feedback devices. |
 | Packets stay at zero | Enable the mod for the save; ensure game and app run as the same user. If it happened after restarting the companion, leave the app open and save/restart FS25. |
 | Packets arrive but output is quiet | Enter a vehicle, close menus, enable output, focus FS25 and check route selection, strength and Solo. |
-| Road buzz is absent | Install the bundled mod; check road amount, tyre type, travel speed and the surface status line. |
+| Road buzz is absent | Install the bundled mod; check road amount, tire type, travel speed and the surface status line. |
 | Text is blurry | Keep the supplied config files beside the executables and avoid a Windows compatibility override that forces bitmap scaling. |
 | No device output during replay | Allow replay output, enable output separately, and keep the dashboard focused. |
 | Controller missing or quiet | Check SDL3.dll, device rumble capability, selected route and USB/Bluetooth compatibility; Refresh controllers retries a fault. |
@@ -102,3 +102,17 @@ GPL-2.0-only. The Lua exporter is adapted from Mhytee's Trueforce-For-All v0.2.6
 ## ModHub validation
 
 The bundled telemetry mod is now 1.0.0.0 (descriptor 113) and passes all 15 GIANTS TestRunner modules. See [fixes and remaining submission work](modhub-test-2026-09-21/FIXES.md). Local-player multiplayer isolation is implemented but real multiplayer playtesting remains outstanding. The mod icon is a code-drawn placeholder, not approved ModHub artwork. Reinstall the bundled telemetry ZIP to use the updated exporter.
+
+### Gentle driving with strong impacts
+
+Advanced → Movement response curve defaults to 2 (range 1–4). It reduces smaller movement while preserving full-scale impacts. A 30% normalized signal becomes 9%; a 100% signal stays 100%. Sensitivity now ranges from 0.01× to 3× and sets the input level before the curve. Higher curve values quiet ordinary driving without lowering the maximum.
+
+Fine texture limit defaults to 2% of the selected output strength (range 0–20%). Wheel texture uses remaining impact headroom; controller texture uses a capped motor envelope. Road tire buzz retains its independent amount. Existing saved strength, sensitivity and layer gains are preserved; missing new controls receive these defaults.
+
+To tune dynamic range, turn texture and road buzz off and solo bumps. Adjust sensitivity and bump gain until the largest normal impacts are strong, then raise the response curve until ordinary driving is gentle. Add body movement and a little texture afterward. Low bump gain and low sensitivity can prevent even large impacts from reaching full strength; setting maximum strength to 100% alone does not calibrate impacts. Real driving confirmation is required.
+
+### App restart recovery
+
+Use app 0.4.0 or later with mod 1.0.0.2 or later. The app atomically writes farmMotionReceiver.txt in Documents/My Games/FarmingSimulator2025 when its receiver starts. The mod checks the instance token about once per second of game updates and reconnects only when it changes. A paused game resumes checking when updates resume. No gameplay data is stored in the marker.
+
+For a custom FS25 profile, set the FARMMOTION_FS25_PROFILE environment variable to the profile folder before launching FarmMotion; it must match the game's getUserProfileAppPath. A missing or unwritable profile produces an Automatic reconnect unavailable status. Existing telemetry still works; resolve the path/permissions or restart the game if a silent pipe failure occurs.

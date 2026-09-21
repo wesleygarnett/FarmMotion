@@ -53,6 +53,12 @@ l.execute("fakeFile.write=function(self,line) table.insert(writes,line); return 
 check(l.eval("opens")==2 and l.eval("#writes")==1,"reconnect resumes telemetry")
 l=setup();l.execute("fakeFile.flush=function() return nil,'flush failed' end; listener:update(16)")
 check(l.eval("closed")==1 and l.eval("#warnings")==1,"flush failure closes pipe and reports")
+l=setup();l.execute("fakeFile.write=function(self,line) table.insert(writes,line) end; fakeFile.flush=function() flushes=(flushes or 0)+1 end; for i=1,180 do listener:update(16) end")
+check(l.eval("#writes")==180 and l.eval("flushes")==180 and l.eval("opens")==1 and l.eval("closed")==0 and l.eval("#warnings")==0,"no-return write and flush keep continuous telemetry on one connection")
+l=setup();l.execute("fakeFile.write=function() return false end; listener:update(16)")
+check(l.eval("closed")==1,"explicit false write closes pipe")
+l=setup();l.execute("fakeFile.flush=function() return false end; listener:update(16)")
+check(l.eval("closed")==1,"explicit false flush closes pipe")
 l=setup();l.execute("localVehicle.components={{node=0}}; getLinearVelocity=function() error('invalid node') end; listener:update(16)")
 check("vy" not in json.loads(l.eval("writes[1]")),"invalid physics node is not queried")
 l=setup()
@@ -64,4 +70,29 @@ except Exception as e:
 check(visible,"unexpected API failure is not swallowed")
 l=setup();l.execute("listener:update(16); listener:deleteMap(); listener:deleteMap()")
 check(l.eval("closed")==1,"map unload closes exactly once")
+def marker_setup():
+    l=setup()
+    l.execute('''
+        getUserProfileAppPath=function() return 'test/' end
+        marker=string.rep('a',32)..string.char(10)
+        local openPipe=io.open
+        io.open=function(name,mode)
+            if mode=='r' then
+                if marker==nil then return nil end
+                return {read=function(self,size) assert(size==64); return marker end,close=function() end}
+            end
+            return openPipe(name,mode)
+        end
+    ''')
+    return l
+l=marker_setup();l.execute("for i=1,200 do listener:update(16) end")
+check(l.eval('opens')==1 and l.eval('closed')==0,'unchanged marker never recycles healthy connection')
+l.execute("fakeFile.write=function() end; fakeFile.flush=function() end; marker=string.rep('b',32)..string.char(10); listener:update(1000)")
+check(l.eval('opens')==2 and l.eval('closed')==1,'new app token recovers even with silent broken-pipe writes')
+l.execute("marker='partial'; listener:update(1000); marker=nil; listener:update(1000)")
+check(l.eval('opens')==2 and l.eval('closed')==1,'missing and partial markers do not interrupt telemetry')
+l.execute("marker=string.rep('c',32)..string.char(10); listener:update(1000)")
+check(l.eval('opens')==3,'later valid token recovers after missing marker')
+l=marker_setup();l.execute("marker=nil; listener:update(16); marker=string.rep('d',32)..string.char(10); listener:update(1000)")
+check(l.eval('opens')==2,'first marker reconnects an already-open old connection')
 print(str(count)+" telemetry tests passed")

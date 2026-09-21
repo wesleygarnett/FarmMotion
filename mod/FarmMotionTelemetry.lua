@@ -113,6 +113,25 @@ function FarmMotionTelemetry:close()
         if not ok and err ~= nil then pipeWarning(err) end
     end
 end
+function FarmMotionTelemetry:checkReceiver(dt)
+    ctx.markerElapsed=(ctx.markerElapsed or 1000)+dt
+    if ctx.markerElapsed < 1000 then return end
+    ctx.markerElapsed=0
+    if type(getUserProfileAppPath) ~= "function" then return end
+    local file=io.open(getUserProfileAppPath().."farmMotionReceiver.txt","r")
+    if file == nil then return end
+    local value=file:read(64)
+    file:close()
+    -- Only accept complete, bounded tokens; missing/partial reads keep the old one.
+    if type(value) ~= "string" or #value ~= 33 or value:sub(33) ~= "\n" then return end
+    local token=value:sub(1,32)
+    if token:find("[^0-9a-f]") ~= nil then return end
+    if ctx.file ~= nil and ctx.receiverToken ~= token then
+        self:close()
+        ctx.retry=1000
+    end
+    ctx.receiverToken=token
+end
 function FarmMotionTelemetry:deleteMap() self:close() end
 function FarmMotionTelemetry:update(dt)
     -- Dedicated servers and clients without a local player never open a pipe.
@@ -121,6 +140,7 @@ function FarmMotionTelemetry:update(dt)
         return
     end
     if not finite(dt) or dt <= 0 then return end
+    self:checkReceiver(dt)
     ctx.elapsed=ctx.elapsed+dt
     ctx.pending=ctx.pending+dt
     if ctx.pending < 16 then return end
@@ -140,8 +160,10 @@ function FarmMotionTelemetry:update(dt)
     -- stale-data timeout stops output if no further packets arrive.
     local line=self:buildLine()
     local wrote,err=ctx.file:write(line.."\n")
-    if wrote ~= nil then wrote,err=ctx.file:flush() end
-    if wrote == nil then
+    -- Some game file wrappers return no values on success. Only an explicit
+    -- false result or an error is a disconnect; nil alone must still flush.
+    if wrote ~= false and err == nil then wrote,err=ctx.file:flush() end
+    if wrote == false or err ~= nil then
         if ctx.elapsed >= (ctx.nextWarning or 0) then
             pipeWarning(err or "pipe disconnected")
             ctx.nextWarning=ctx.elapsed+10000
