@@ -53,4 +53,4 @@ The Windows app is unsigned. This project is independent of GIANTS Software and 
 
 [User guide](docs/USER_GUIDE.md) · [Changelog](CHANGELOG.md) · [Build instructions](CONTRIBUTING.md) · [License](LICENSE)
 
-The mod passes all 15 GIANTS TestRunner modules. Live multiplayer, hardware compatibility and ModHub submission artwork still need validation; this is not a ModHub-approved release. [Test details](docs/modhub-test-2026-09-21/FIXES.md)
+The mod passes all 15 GIANTS TestRunner modules. Live multiplayer, hardware compatibility and ModHub submission artwork still need validation; this is not a ModHub-approved release. [Test details](docs/TESTING.md)

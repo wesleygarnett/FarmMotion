@@ -6,7 +6,7 @@ A small Windows companion that turns **Farming Simulator 25** vehicle movement i
 
 **0.3.0 preview · Windows x64 · Local-player telemetry · GPL-2.0-only**
 
-![Dark WPF UI dashboard](dashboard.png)
+![Dark WPF UI dashboard](dashboard-compact.png)
 
 ## Download and install
 
@@ -101,7 +101,7 @@ GPL-2.0-only. The Lua exporter is adapted from Mhytee's Trueforce-For-All v0.2.6
 
 ## ModHub validation
 
-The bundled telemetry mod is now 1.0.0.0 (descriptor 113) and passes all 15 GIANTS TestRunner modules. See [fixes and remaining submission work](modhub-test-2026-09-21/FIXES.md). Local-player multiplayer isolation is implemented but real multiplayer playtesting remains outstanding. The mod icon is a code-drawn placeholder, not approved ModHub artwork. Reinstall the bundled telemetry ZIP to use the updated exporter.
+The bundled telemetry mod is now 1.0.0.2 (descriptor 113) and passes all 15 GIANTS TestRunner modules. See [fixes and remaining submission work](TESTING.md). Local-player multiplayer isolation is implemented but real multiplayer playtesting remains outstanding. The mod icon is a code-drawn placeholder, not approved ModHub artwork. Reinstall the bundled telemetry ZIP to use the updated exporter.
 
 ### Gentle driving with strong impacts
 

@@ -26,7 +26,7 @@ $version = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'VERSION') -Raw).T
 if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'VERSION must use major.minor.patch' }
 $assemblyText = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'src\AssemblyInfo.cs') -Raw
 if (-not $assemblyText.Contains('AssemblyInformationalVersion("' + $version + '")') -or -not $assemblyText.Contains('AssemblyFileVersion("' + $version + '.0")')) { throw 'Assembly metadata does not match VERSION' }
-$sources = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'src') -Filter '*.cs' | Where-Object { $_.Name -notin @('Dashboard.cs','AppOptionsDialog.cs') } | ForEach-Object FullName)
+$sources = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'src') -Filter '*.cs' | ForEach-Object FullName)
 $sources += @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'tests') -Filter '*.cs' | ForEach-Object FullName)
 $common = @('/nologo', '/platform:x64', '/optimize+', '/warnaserror+',
     "/win32manifest:$PSScriptRoot\src\app.manifest", "/win32icon:$PSScriptRoot\assets\farmmotion.ico",

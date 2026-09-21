@@ -8,6 +8,6 @@ Telemetry and replay files are untrusted input: packet size and JSON nesting are
 
 For a suspected vulnerability, use the repository's **Security → Report a vulnerability** feature when available. If unavailable on this private repository, contact the owner privately through your existing channel; do not post exploit details or sensitive logs in a public issue.
 
-Version 0.4.x is the currently maintained preview line. No security audit or hardware certification is claimed. Known limitations and validation are documented in [docs/REVIEW.md](docs/REVIEW.md).
+Version 0.4.x is the currently maintained preview line. No security audit or hardware certification is claimed. Known limitations and validation are documented in [docs/TESTING.md](docs/TESTING.md).
 
 The companion writes a random instance token to farmMotionReceiver.txt in the FS25 profile. The mod polls this local file to detect app restarts; it contains no credentials or gameplay data. Marker failures are shown in telemetry status and leave explicit-error reconnect handling available.

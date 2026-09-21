@@ -21,7 +21,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'CHANGELOG.md'), (Join-Path $PSS
 New-Item -ItemType Directory -Path (Join-Path $portable 'assets') | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'assets\farmmotion.png') -Destination (Join-Path $portable 'assets')
 New-Item -ItemType Directory -Path (Join-Path $portable 'docs') | Out-Null
-foreach($doc in @('USER_GUIDE.md','dashboard-compact.png')) { Copy-Item -LiteralPath (Join-Path $PSScriptRoot ('docs\'+$doc)) -Destination (Join-Path $portable 'docs') }
+foreach($doc in @('USER_GUIDE.md','TESTING.md','RELEASING.md','dashboard-compact.png')) { Copy-Item -LiteralPath (Join-Path $PSScriptRoot ('docs\'+$doc)) -Destination (Join-Path $portable 'docs') }
 if(@(Get-ChildItem -LiteralPath $portable -Filter '*.exe').Count -ne 1 -or -not (Test-Path -LiteralPath (Join-Path $portable 'FarmMotion.exe'))) { throw 'Portable release must contain only FarmMotion.exe' }
 $binary = Join-Path $OutputDirectory "FarmMotion-v$version-win-x64.zip"
 Compress-Archive -Path (Join-Path $portable '*') -DestinationPath $binary -Force
