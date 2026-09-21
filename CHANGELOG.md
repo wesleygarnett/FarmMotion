@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0 beta candidate / telemetry mod 1.0.0.2
+
+- App-instance marker restores mod reconnects after app restarts without relying on IO error returns. Live restart validation remains pending.
+- Correct no-return file write/flush handling from mod 1.0.0.1.
+- Gentler defaults: 10% strength, 0.25x sensitivity, 10% bumps/body, 100% fine texture.
+- Adjustable movement response curve (default 2), sensitivity down to 0.01x, and separate 2% fine-texture ceiling.
+- Road tire buzz spelling and 0.01% adjustment increments.
+- Updated beta installation, compatibility and security documentation.
+
 ## Telemetry mod 1.0.0.0
 
 - Descriptor 113, English/German descriptions, DDS placeholder icon and embedded full license.

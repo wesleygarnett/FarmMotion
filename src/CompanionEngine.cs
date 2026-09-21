@@ -60,7 +60,7 @@ namespace FarmMotion {
         public string TelemetryStatus {
             get {
                 if(receiver==null) return testing ? "Preview data • hardware output disabled":"Waiting for telemetry";
-                return "Packets "+receiver.Packets+" • Invalid "+receiver.Invalid+" • Connection errors "+receiver.ConnectionErrors+" • Gaps "+receiver.Gaps+" • Last gap "+receiver.LastGap.ToString("0.00")+"s"+(clock.Elapsed.TotalSeconds-receiver.LastPacketTime>.25 ? " • Waiting for telemetry":"");
+                return "Packets "+receiver.Packets+" • Invalid "+receiver.Invalid+" • Connection errors "+receiver.ConnectionErrors+" • Gaps "+receiver.Gaps+" • Last gap "+receiver.LastGap.ToString("0.00")+"s"+(clock.Elapsed.TotalSeconds-receiver.LastPacketTime>.25 ? " • Waiting for telemetry":"")+(receiver.RestartMarkerError=="" ? "":" • "+receiver.RestartMarkerError);
             }
         }
         public CompanionEngine(bool testing,bool startDisarmed=false) {

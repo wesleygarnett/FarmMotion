@@ -20,7 +20,8 @@ foreach($name in @('Wpf.Ui.dll','Wpf.Ui.Abstractions.dll','System.Memory.dll','S
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'CHANGELOG.md'), (Join-Path $PSScriptRoot 'SECURITY.md'), (Join-Path $PSScriptRoot 'CONTRIBUTING.md') -Destination $portable
 New-Item -ItemType Directory -Path (Join-Path $portable 'assets') | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'assets\farmmotion.png') -Destination (Join-Path $portable 'assets')
-Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'docs') -Destination $portable -Recurse
+New-Item -ItemType Directory -Path (Join-Path $portable 'docs') | Out-Null
+foreach($doc in @('USER_GUIDE.md','dashboard-compact.png')) { Copy-Item -LiteralPath (Join-Path $PSScriptRoot ('docs\'+$doc)) -Destination (Join-Path $portable 'docs') }
 $binary = Join-Path $OutputDirectory "FarmMotion-v$version-win-x64.zip"
 Compress-Archive -Path (Join-Path $portable '*') -DestinationPath $binary -Force
 $mod = Join-Path $OutputDirectory 'FS25_FarmMotionTelemetry.zip'

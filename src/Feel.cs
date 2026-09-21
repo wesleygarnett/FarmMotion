@@ -6,8 +6,9 @@ using System.IO;
 using System.Web.Script.Serialization;
 namespace FarmMotion {
     public sealed class FeelSettings {
-        public const double DefaultStrength=.50, MaximumStrength=1.0;
-        public double Strength=DefaultStrength, Sensitivity=.25, Texture=.20, Bumps=1, Body=.35;
+        public const double DefaultStrength=.10, MaximumStrength=1.0;
+        public double Strength=DefaultStrength, Sensitivity=.25, Texture=1, Bumps=.10, Body=.10;
+        public double ResponseCurve=2, TextureLimit=.02;
         public double TextureFrequency=28;
         public double RoadTexture=0, TreadCount=40;
         public double RoadFrequency=75;
@@ -15,8 +16,9 @@ namespace FarmMotion {
         // Missing in older settings files: preserve the existing V1 selection.
         public bool Enhanced=false;
         public void Validate() {
-            Strength=Limit(Strength,0,MaximumStrength,DefaultStrength); Sensitivity=Limit(Sensitivity,.25,3,.25);
-            Texture=Limit(Texture,0,4,.2); Bumps=Limit(Bumps,0,2,1); Body=Limit(Body,0,2,.35);
+            Strength=Limit(Strength,0,MaximumStrength,DefaultStrength); Sensitivity=Limit(Sensitivity,.01,3,.25);
+            Texture=Limit(Texture,0,4,1); Bumps=Limit(Bumps,0,2,.10); Body=Limit(Body,0,2,.10);
+            ResponseCurve=Limit(ResponseCurve,1,4,2); TextureLimit=Limit(TextureLimit,0,.2,.02);
             TextureFrequency=Limit(TextureFrequency,12,45,28);
             RoadTexture=Limit(RoadTexture,0,.2,0); TreadCount=Limit(TreadCount,20,80,40);
             RoadFrequency=Limit(RoadFrequency,50,90,75);
