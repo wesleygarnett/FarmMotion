@@ -36,6 +36,13 @@ namespace FarmMotion {
         [DllImport("winmm.dll")] static extern uint timeEndPeriod(uint period);
         readonly object gate=new object(); readonly Stopwatch clock=Stopwatch.StartNew();
         readonly Feel feel=new Feel(); FeelSettings settings=new FeelSettings();
+        AppOptions options; ControllerOutput controller;
+        FeedbackSolo solo=FeedbackSolo.All;
+        bool populatingDevices, wheelFault; string controllerId="", deviceListKey="";
+        readonly ComboBox controllers=new ComboBox(), soloChoice=new ComboBox();
+        readonly CheckBox wheelEnabled=new CheckBox(), controllerEnabled=new CheckBox();
+        readonly Label controllerStatus=new Label();
+        readonly TrackBar rumbleStrength=new TrackBar();
         readonly Queue<ScopeFrame> scopeFrames=new Queue<ScopeFrame>(1000);
         readonly bool testing; Receiver receiver; Thread worker; volatile bool closing;
         bool armed, replaying, allowReplay, focused; Guid selected;
@@ -53,18 +60,23 @@ namespace FarmMotion {
         readonly System.Windows.Forms.Timer timer=new System.Windows.Forms.Timer();
         readonly string settingsPath=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"FarmMotion","settings.json");
         int testTicks;
-        public Dashboard(bool test) {
+        public Dashboard(bool test,bool startDisarmed=false) {
             testing=test; SuspendLayout(); AutoScaleDimensions=new SizeF(96,96); AutoScaleMode=AutoScaleMode.Dpi;
-            Text="FarmMotion | Force feedback & rumble for Farm Simulator"; Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath); ClientSize=new Size(1180,800); MinimumSize=new Size(760,580);
+            options=new AppOptions();
+            if(!testing) try { options=AppOptions.Load(); } catch(Exception e) { issue="App preferences could not be loaded: "+e.Message; }
+            if(!testing && !string.IsNullOrEmpty(AppOptions.LoadError)) { issue=AppOptions.LoadError+" Output is disabled; check device selections."; startDisarmed=true; }
+            if(options.ControllerId.StartsWith("session:",StringComparison.Ordinal)) options.ControllerId="";
+            Text="FarmMotion v"+AppVersion.Display+" | Force feedback & rumble for Farm Simulator"; Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath); ClientSize=new Size(1180,940); MinimumSize=new Size(760,580);
             BackColor=Color.FromArgb(243,246,248); ForeColor=Color.FromArgb(27,43,54); Font=new Font("Segoe UI",10);
             StartPosition=FormStartPosition.CenterScreen;
             if(!testing) try { settings=SettingsStore.Load(settingsPath); } catch { issue="Saved settings could not be loaded; using baseline."; }
             settings.Validate();
             var viewport=new Panel { Dock=DockStyle.Fill,AutoScroll=true };
             Controls.Add(viewport);
-            var layout=new TableLayoutPanel { ColumnCount=1,RowCount=2,Padding=new Padding(16,12,16,16),MinimumSize=new Size(1080,700) };
+            var layout=new TableLayoutPanel { ColumnCount=1,RowCount=3,Padding=new Padding(16,12,16,16),MinimumSize=new Size(1080,860) };
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute,44));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute,140));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent,100));
             viewport.Controls.Add(layout);
             viewport.ClientSizeChanged+=delegate {
@@ -73,23 +85,42 @@ namespace FarmMotion {
             var header=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Margin=Padding.Empty };
             header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,210)); header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
             header.RowStyles.Add(new RowStyle(SizeType.Percent,100)); layout.Controls.Add(header,0,0);
-            header.Controls.Add(new Label { Text="FarmMotion",Font=new Font(Font.FontFamily,20,FontStyle.Bold),Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleLeft,Margin=Padding.Empty },0,0);
+            header.Controls.Add(new Label { Text="FarmMotion v"+AppVersion.Display,Font=new Font(Font.FontFamily,15,FontStyle.Bold),Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleLeft,Margin=Padding.Empty },0,0);
+            var routing=new FlowLayoutPanel { Dock=DockStyle.Fill,WrapContents=true,Padding=new Padding(0,8,0,0) };
+            layout.Controls.Add(routing,0,1);
+            wheelEnabled.Text="Wheel"; wheelEnabled.AutoSize=true; wheelEnabled.Checked=options.WheelEnabled; wheelEnabled.Margin=new Padding(0,8,12,0);
+            wheelEnabled.CheckedChanged+=delegate { lock(gate) { options.WheelEnabled=wheelEnabled.Checked; wheelFault=false; } };
+            routing.Controls.Add(wheelEnabled);
+            controllerEnabled.Text="Controller rumble"; controllerEnabled.AutoSize=true; controllerEnabled.Checked=options.ControllerEnabled; controllerEnabled.Margin=new Padding(0,8,10,0);
+            controllerEnabled.CheckedChanged+=delegate { lock(gate) options.ControllerEnabled=controllerEnabled.Checked; if(controller!=null && controllerEnabled.Checked) controller.Refresh(); };
+            routing.Controls.Add(controllerEnabled);
+            controllers.Width=270; controllers.DropDownStyle=ComboBoxStyle.DropDownList; controllers.DisplayMember="Name";
+            controllers.SelectedIndexChanged+=delegate { lock(gate) { var item=controllers.SelectedItem as ControllerOutput.Info; controllerId=item==null ? "":item.Id; if(!populatingDevices) options.ControllerId=controllerId.StartsWith("session:",StringComparison.Ordinal) ? "":controllerId; } };
+            routing.Controls.Add(controllers);
+            routing.Controls.Add(Button("Refresh controllers",delegate { if(controller!=null) controller.Refresh(); }));
+            routing.Controls.Add(new Label { Text="Rumble strength",AutoSize=true,Margin=new Padding(8,8,0,0) });
+            rumbleStrength.Minimum=0; rumbleStrength.Maximum=100; rumbleStrength.Value=(int)Math.Round(options.ControllerStrength*100); rumbleStrength.Width=130; rumbleStrength.Height=32; rumbleStrength.AutoSize=false; rumbleStrength.TickStyle=TickStyle.None;
+            var rumbleValue=new Label { Text=rumbleStrength.Value+"%",AutoSize=true,Margin=new Padding(0,8,0,0) };
+            rumbleStrength.ValueChanged+=delegate { lock(gate) options.ControllerStrength=rumbleStrength.Value/100.0; rumbleValue.Text=rumbleStrength.Value+"%"; };
+            routing.Controls.Add(rumbleStrength); routing.Controls.Add(rumbleValue); routing.SetFlowBreak(rumbleValue,true);
+            var preferences=Button("App settings / Updates",ShowAppOptions); routing.Controls.Add(preferences);
+            controllerStatus.AutoSize=true; controllerStatus.Margin=new Padding(8,8,0,0); controllerStatus.MaximumSize=new Size(700,40); routing.Controls.Add(controllerStatus);
             var content=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Margin=new Padding(0,10,0,0) };
             content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,52)); content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,48));
-            content.RowStyles.Add(new RowStyle(SizeType.Percent,100)); layout.Controls.Add(content,0,1);
+            content.RowStyles.Add(new RowStyle(SizeType.Percent,100)); layout.Controls.Add(content,0,2);
             var tuning=Card("Vehicle feel"); var monitor=Card("Live monitor");
             tuning.Margin=new Padding(0,0,10,0); monitor.Margin=new Padding(10,0,0,0);
             content.Controls.Add(tuning,0,0); content.Controls.Add(monitor,1,0);
             var top=new FlowLayoutPanel { Dock=DockStyle.Fill,WrapContents=false,Padding=new Padding(0,4,0,0),Margin=Padding.Empty };
-            wheels.Width=300; wheels.DisplayMember="Name"; wheels.DropDownStyle=ComboBoxStyle.DropDownList; wheels.SelectedIndexChanged+=delegate { lock(gate) { selected=wheels.SelectedItem is Wheel.Info ? ((Wheel.Info)wheels.SelectedItem).Id : Guid.Empty; armed=false; } };
+            wheels.Width=300; wheels.DisplayMember="Name"; wheels.DropDownStyle=ComboBoxStyle.DropDownList; wheels.SelectedIndexChanged+=delegate { lock(gate) { selected=wheels.SelectedItem is Wheel.Info ? ((Wheel.Info)wheels.SelectedItem).Id : Guid.Empty; wheelFault=false; if(!populatingDevices) options.WheelId=selected==Guid.Empty ? "":selected.ToString(); } };
             top.Controls.Add(wheels); top.Controls.Add(Button("Refresh wheels",RefreshWheels));
-            arm.Text="Enable output"; StyleButton(arm,true); arm.Click+=delegate { lock(gate) { armed=!armed; issue=""; } }; top.Controls.Add(arm);
+            arm.Text="Enable output"; StyleButton(arm,true); arm.Click+=delegate { lock(gate) { armed=!armed; wheelFault=false; issue=""; } if(controller!=null && armed) controller.Refresh(); }; top.Controls.Add(arm);
             var stop=Button("STOP",delegate { lock(gate) { armed=false; replaying=false; feel.Reset(); } }); stop.BackColor=Color.FromArgb(254,233,232); stop.ForeColor=Color.FromArgb(164,39,43); top.Controls.Add(stop); header.Controls.Add(top,1,0);
             wheels.Margin=new Padding(0,5,12,0);
             foreach(Control control in top.Controls) if(control is Button) { control.AutoSize=false; control.MinimumSize=Size.Empty; control.Size=new Size(control==stop ? 76:132,36); control.Padding=Padding.Empty; control.Margin=new Padding(0,0,8,0); }
-            var controls=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=4,RowCount=12,Margin=Padding.Empty }; tuningControls=controls;
+            var controls=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=4,RowCount=13,Margin=Padding.Empty }; tuningControls=controls;
             for(int row=0;row<11;row++) controls.RowStyles.Add(new RowStyle(SizeType.Absolute,row==0 ? 28 : (row==3 ? 36 : 40)));
-            controls.RowStyles.Add(new RowStyle(SizeType.Percent,100));
+            controls.RowStyles.Add(new RowStyle(SizeType.Absolute,42)); controls.RowStyles.Add(new RowStyle(SizeType.Percent,100));
             controls.Controls.Add(new Label { Text="Basic mode",Dock=DockStyle.Fill,Font=new Font(Font.FontFamily,10,FontStyle.Bold),ForeColor=Color.FromArgb(14,111,106) },0,0);
             controls.SetColumnSpan(controls.GetControlFromPosition(0,0),4);
             StyleButton(advancedToggle,false); advancedToggle.Dock=DockStyle.Fill; advancedToggle.MinimumSize=Size.Empty; advancedToggle.Padding=Padding.Empty; advancedToggle.TextAlign=ContentAlignment.MiddleLeft; advancedToggle.Margin=new Padding(0,3,0,3);
@@ -105,9 +136,12 @@ namespace FarmMotion {
             AddSlider(controls,8,"Road tyre buzz (0 = off)",0,20,(int)Math.Round(settings.RoadTexture*100),v=>(v*.25).ToString("0.##")+" % of cap",v=>settings.RoadTexture=v/100.0);
             AddSlider(controls,9,"Road buzz pitch",50,90,(int)settings.RoadFrequency,v=>v+" Hz",v=>settings.RoadFrequency=v);
             mode.DropDownStyle=ComboBoxStyle.DropDownList; mode.Items.AddRange(new object[]{"Motion-shaped v1 (previous)","Motion-shaped v2 (new)","Original 18 Hz"}); mode.SelectedIndex=settings.Original ? 2:(settings.Enhanced ? 1:0); mode.Dock=DockStyle.Fill; mode.Margin=new Padding(3,8,3,0);
-            mode.SelectedIndexChanged+=delegate { lock(gate) { settings.Original=mode.SelectedIndex==2; settings.Enhanced=mode.SelectedIndex==1; feel.Reset(); issue=mode.SelectedIndex==1 ? "V2: per-wheel bumps, layered texture, gradual peak compression." : "Previous processing restored. Sliders are shared between comparison modes."; } for(int i=2;i<6;i++) sliders[i].Enabled=mode.SelectedIndex!=2; };
+            mode.SelectedIndexChanged+=delegate { lock(gate) { settings.Original=mode.SelectedIndex==2; settings.Enhanced=mode.SelectedIndex==1; feel.Reset(); issue=mode.SelectedIndex==1 ? "V2: per-wheel bumps, layered texture, gradual peak compression." : "Previous processing restored. Sliders are shared between comparison modes."; } ResetSoloChoices(); for(int i=2;i<6;i++) sliders[i].Enabled=mode.SelectedIndex!=2; };
             for(int i=2;i<6;i++) sliders[i].Enabled=!settings.Original;
             controls.Controls.Add(new Label { Text="Comparison",Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleLeft },0,10); controls.Controls.Add(mode,1,10); controls.SetColumnSpan(mode,3); tuning.Controls.Add(controls,0,1); SetAdvanced(false);
+            soloChoice.DropDownStyle=ComboBoxStyle.DropDownList; soloChoice.Dock=DockStyle.Fill; soloChoice.Margin=new Padding(3,6,3,0);
+            soloChoice.SelectedIndexChanged+=delegate { lock(gate) solo=SoloFromIndex(soloChoice.SelectedIndex,settings.Original); };
+            controls.Controls.Add(new Label { Text="Solo feedback",Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleLeft },0,11); controls.Controls.Add(soloChoice,1,11); controls.SetColumnSpan(soloChoice,3); ResetSoloChoices();
             var live=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=1,RowCount=4,Margin=Padding.Empty };
             live.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
             live.RowStyles.Add(new RowStyle(SizeType.Percent,100));
@@ -127,18 +161,19 @@ namespace FarmMotion {
             foreach(Control action in actions.Controls) { action.Dock=DockStyle.Fill; action.Font=new Font(Font.FontFamily,9); action.Padding=new Padding(2); action.MinimumSize=Size.Empty; }
             tuning.Controls.Add(actions,0,2);
             var bottom=new FlowLayoutPanel { Dock=DockStyle.Fill,FlowDirection=FlowDirection.TopDown,WrapContents=false };
-            replayForces.Text="Allow wheel output during replay (starts disarmed)"; replayForces.AutoSize=true; replayForces.CheckedChanged+=delegate { lock(gate) { allowReplay=replayForces.Checked; armed=false; } };
+            replayForces.Text="Allow device output during replay (starts disabled)"; replayForces.AutoSize=true; replayForces.CheckedChanged+=delegate { lock(gate) { allowReplay=replayForces.Checked; armed=false; } };
             bottom.Controls.Add(replayForces); status.AutoSize=true; message.AutoSize=true; bottom.Controls.Add(status); bottom.Controls.Add(message); live.Controls.Add(bottom,0,3);
             surfaceStatus.AutoSize=true; bottom.Controls.Add(surfaceStatus);
             bottom.SizeChanged+=delegate { foreach(Control item in bottom.Controls) item.MaximumSize=new Size(Math.Max(1,bottom.ClientSize.Width-8),0); };
             monitor.RowStyles[2].Height=0;
             ResumeLayout(true);
             KeyPreview=true; KeyDown+=delegate(object sender,KeyEventArgs e) { if(e.KeyCode==Keys.Escape) lock(gate) armed=false; };
-            if(!testing) { receiver=new Receiver(clock); receiver.SampleReceived+=OnSample; RefreshWheels(); worker=new Thread(OutputLoop) { IsBackground=true }; worker.SetApartmentState(ApartmentState.STA); worker.Start(); }
-            else { PopulateWheels(new Wheel.Info[0]); }
+            if(!testing) { receiver=new Receiver(clock); receiver.SampleReceived+=OnSample; controller=new ControllerOutput(); controller.SetBluetoothRumble(options.AllowBluetoothRumble); RefreshWheels(); armed=options.EnableOutputOnStartup && !startDisarmed; if(startDisarmed && string.IsNullOrEmpty(AppOptions.LoadError)) issue="Updated to v"+AppVersion.Display+". Enable output when ready."; worker=new Thread(OutputLoop) { IsBackground=true }; worker.SetApartmentState(ApartmentState.STA); worker.Start(); }
+            else { PopulateWheels(new Wheel.Info[0]); PopulateControllers(new ControllerOutput.Info[0]); }
             timer.Interval=25; timer.Tick+=Tick; timer.Start();
+            Shown+=delegate { if(testing && preferences.Bottom>routing.ClientSize.Height) throw new Exception("App settings button is clipped"); };
             FormClosing+=delegate { if(!testing) try { SaveSettings(); } catch(Exception e) { MessageBox.Show(this,"Settings could not be saved: "+e.Message,"FarmMotion",MessageBoxButtons.OK,MessageBoxIcon.Warning); } };
-            FormClosed+=delegate { closing=true; timer.Stop(); if(receiver!=null) receiver.Dispose(); if(worker!=null) worker.Join(1500); lock(gate) { if(recorder!=null) recorder.Dispose(); } };
+            FormClosed+=delegate { closing=true; timer.Stop(); if(receiver!=null) receiver.Dispose(); if(worker!=null) worker.Join(1500); if(controller!=null) controller.Dispose(); lock(gate) { if(recorder!=null) recorder.Dispose(); } };
         }
         static void StyleButton(Button b,bool primary) { b.AutoSize=true; b.MinimumSize=new Size(100,36); b.Padding=new Padding(10,5,10,5); b.Margin=new Padding(0,0,8,8); b.FlatStyle=FlatStyle.Flat; b.FlatAppearance.BorderSize=1; b.FlatAppearance.BorderColor=Color.FromArgb(210,222,227); b.BackColor=primary ? Color.FromArgb(14,111,106):Color.White; b.ForeColor=primary ? Color.White:Color.FromArgb(27,43,54); b.Cursor=Cursors.Hand; }
         TableLayoutPanel Card(string title) {
@@ -178,15 +213,48 @@ namespace FarmMotion {
             table.Controls.Add(help,3,row); sliders.Add(slider);
         }
         void SavePreview(string name) { using(var bitmap=new Bitmap(Width,Height)) { DrawToBitmap(bitmap,new Rectangle(0,0,Width,Height)); bitmap.Save(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,name)); } }
-        void RefreshWheels() { lock(gate) { armed=false; selected=Guid.Empty; } using(var wheel=new Wheel()) PopulateWheels(wheel.List()); }
-        void PopulateWheels(IEnumerable<Wheel.Info> devices) {
-            lock(gate) { armed=false; selected=Guid.Empty; }
-            wheels.Items.Clear(); foreach(var item in devices) wheels.Items.Add(item);
-            if(wheels.Items.Count==0) { wheels.Items.Add("no device detected"); wheels.SelectedIndex=0; arm.Enabled=false; return; }
-            int index=0; for(int i=0;i<wheels.Items.Count;i++) if(wheels.Items[i].ToString().IndexOf("R3",StringComparison.OrdinalIgnoreCase)>=0) index=i;
-            wheels.SelectedIndex=index; arm.Enabled=true;
+        static FeedbackSolo SoloFromIndex(int index,bool original) {
+            if(original) return index==1 ? FeedbackSolo.Original : index==2 ? FeedbackSolo.Road : FeedbackSolo.All;
+            return index==1 ? FeedbackSolo.Bumps : index==2 ? FeedbackSolo.Body : index==3 ? FeedbackSolo.Texture : index==4 ? FeedbackSolo.Road : FeedbackSolo.All;
         }
-        void SaveSettings() { FeelSettings snapshot; lock(gate) snapshot=settings.Copy(); SettingsStore.Save(settingsPath,snapshot); lock(gate) issue="Settings saved."; }
+        void ResetSoloChoices() {
+            soloChoice.Items.Clear(); soloChoice.Items.AddRange(settings.Original ? new object[]{"All effects","Original movement only","Road tyre buzz only"} : new object[]{"All effects","Individual bumps only","Body movement only","Fine texture only","Road tyre buzz only"}); soloChoice.SelectedIndex=0;
+        }
+        void ShowAppOptions() {
+            if(testing) return;
+            using(var dialog=new AppOptionsDialog(options)) {
+                if(dialog.ShowDialog(this)==DialogResult.OK && dialog.InstallFolder!=null) {
+                    lock(gate) { armed=false; replaying=false; feel.Reset(); }
+                    if(controller!=null) controller.Submit("",false,0,0);
+                    AppUpdate.BeginInstall(dialog.InstallFolder); Close(); return;
+                }
+            }
+            if(controller!=null) controller.SetBluetoothRumble(options.AllowBluetoothRumble);
+        }
+        void RefreshWheels() { try { using(var wheel=new Wheel()) PopulateWheels(wheel.List()); } catch(Exception e) { PopulateWheels(new Wheel.Info[0]); lock(gate) issue="Wheel discovery unavailable: "+e.Message; } }
+        void PopulateWheels(IEnumerable<Wheel.Info> devices) {
+            populatingDevices=true;
+            try {
+                lock(gate) selected=Guid.Empty;
+                wheels.Items.Clear(); foreach(var item in devices) wheels.Items.Add(item);
+                if(wheels.Items.Count==0) { wheels.Items.Add("no device detected"); wheels.SelectedIndex=0; return; }
+                int index=-1; for(int i=0;i<wheels.Items.Count;i++) if(((Wheel.Info)wheels.Items[i]).Id.ToString()==options.WheelId) index=i;
+                if(index<0 && string.IsNullOrEmpty(options.WheelId) && wheels.Items.Count==1) { index=0; options.WheelId=((Wheel.Info)wheels.Items[0]).Id.ToString(); }
+                wheels.SelectedIndex=index;
+            } finally { populatingDevices=false; }
+        }
+        void PopulateControllers(ControllerOutput.Info[] devices) {
+            populatingDevices=true;
+            try {
+                string previousId=controllerId; controllers.Items.Clear(); int index=-1,capable=0,unique=-1;
+                foreach(var item in devices) { if(!item.SupportsRumble) continue; int added=controllers.Items.Add(item); if(item.Id==options.ControllerId || item.Id==previousId) index=added; capable++; unique=added; }
+                if(index<0 && string.IsNullOrEmpty(options.ControllerId) && capable==1 && !((ControllerOutput.Info)controllers.Items[unique]).Id.StartsWith("session:",StringComparison.Ordinal)) { index=unique; options.ControllerId=((ControllerOutput.Info)controllers.Items[index]).Id; }
+                if(controllers.Items.Count==0) { controllers.Items.Add("no rumble controller detected"); controllers.SelectedIndex=0; }
+                else controllers.SelectedIndex=index;
+                lock(gate) { var item=controllers.SelectedItem as ControllerOutput.Info; controllerId=item==null ? "":item.Id; }
+            } finally { populatingDevices=false; }
+        }
+        void SaveSettings() { FeelSettings snapshot; lock(gate) snapshot=settings.Copy(); SettingsStore.Save(settingsPath,snapshot); options.Save(); lock(gate) issue="Settings saved."; }
         void OnSample(Sample sample,string json,double now) {
             lock(gate) {
                 if(recorder!=null) try { recorder.WriteLine(Recording.Line(now-recordStart,json)); } catch(Exception e) { issue="Recording stopped: "+e.Message; recorder.Dispose(); recorder=null; }
@@ -208,16 +276,20 @@ namespace FarmMotion {
             double measuredStart=clock.Elapsed.TotalSeconds,lastUpdate=measuredStart,longest=0; int updates=0;
             try {
                 while(!closing) {
-                    bool enabled,canOutput; Guid id; double force;
+                    bool enabled,canOutput,rumbleEnabled; Guid id; double force; string rumbleId; RumbleSignal rumble;
                     lock(gate) {
                         double now=clock.Elapsed.TotalSeconds;
                         if(replaying && replay!=null) {
                             while(replayIndex<replay.Count && replay[replayIndex].At<=now-replayStart) { var frame=replay[replayIndex++]; feel.Push(frame.Sample,replayStart+frame.At,settings); vehicle="Replay: "+frame.Sample.Vehicle; }
                             if(replayIndex==replay.Count && now-replayStart>replay[replay.Count-1].At+.15) { armed=false; feel.Reset(); issue="Replay finished. Replay again to compare settings."; }
                         }
-                        preview=feel.Force(now,settings); clipped=feel.Clipped; suspension=feel.Suspension; acceleration=feel.Acceleration;
-                        enabled=armed && selected!=Guid.Empty; id=selected; canOutput=replaying ? allowReplay && focused : Program.GameFocused(); force=enabled && canOutput ? preview : 0;
+                        preview=feel.Force(now,settings,solo); clipped=feel.Clipped; suspension=feel.Suspension; acceleration=feel.Acceleration;
+                        canOutput=(replaying ? allowReplay && focused : Program.GameFocused()) && feel.IsFresh(now);
+                        enabled=armed && options.WheelEnabled && !wheelFault && selected!=Guid.Empty && canOutput; id=selected; force=enabled ? preview : 0;
+                        rumble=feel.GetRumble(now,settings,solo); rumble.Low*=options.ControllerStrength; rumble.High*=options.ControllerStrength;
+                        rumbleEnabled=armed && options.ControllerEnabled && canOutput; rumbleId=controllerId;
                     }
+                    if(controller!=null) controller.Submit(rumbleId,rumbleEnabled,rumble.Low,rumble.High);
                     try {
                         if(wheel!=null && opened!=id) { wheel.Dispose(); wheel=null; }
                         if(enabled && wheel==null) { wheel=new Wheel(); wheel.Open(id); opened=id; }
@@ -227,18 +299,23 @@ namespace FarmMotion {
                             commanded=force; scopeFrames.Enqueue(new ScopeFrame(suspension/.45,acceleration/6,commanded/.1,preview/.1)); while(scopeFrames.Count>1000) scopeFrames.Dequeue();
                             if(sent-measuredStart>=1) { outputHz=updates/(sent-measuredStart); outputGapMs=longest*1000; measuredStart=sent; updates=0; longest=0; }
                         }
-                    } catch(Exception e) { if(wheel!=null) { wheel.Dispose(); wheel=null; } lock(gate) { armed=false; commanded=0; issue="Output stopped: "+e.Message; } }
+                    } catch(Exception e) { if(wheel!=null) { wheel.Dispose(); wheel=null; } lock(gate) { wheelFault=true; commanded=0; issue="Wheel output stopped: "+e.Message+". Toggle Wheel to retry; controller output is independent."; } }
                     // Faster sampling supports the separate 50-90 Hz road carrier.
                     // The measured loop rate remains visible; Windows is not real-time.
                     Thread.Sleep(2);
                 }
-            } finally { if(wheel!=null) wheel.Dispose(); if(preciseTimer) timeEndPeriod(1); }
+            } finally { if(controller!=null) controller.Submit("",false,0,0); if(wheel!=null) wheel.Dispose(); if(preciseTimer) timeEndPeriod(1); }
         }
         void Tick(object sender,EventArgs e) {
+            if(controller!=null) {
+                var devices=controller.Devices; string key=""; foreach(var device in devices) key+=device.Id+"|"+device.SupportsRumble+";";
+                if(key!=deviceListKey || controllers.Items.Count==0) { deviceListKey=key; PopulateControllers(devices); }
+                controllerStatus.Text=controller.Status;
+            }
             if(testing) {
                 if(testTicks==0) {
                     if(sliders[2].Visible || !sliders[0].Visible || !sliders[1].Visible) throw new Exception("Basic mode visibility failed");
-                    if(wheels.Text!="no device detected" || selected!=Guid.Empty || arm.Enabled) throw new Exception("Empty device state failed");
+                    if(wheels.Text!="no device detected" || selected!=Guid.Empty || !arm.Enabled || armed) throw new Exception("Empty device state failed");
                     SavePreview("dashboard-basic-preview.png"); advancedToggle.PerformClick();
                     if(!sliders[7].Visible) throw new Exception("Advanced mode did not reveal all sliders");
                 }
@@ -246,6 +323,19 @@ namespace FarmMotion {
                 if(testTicks==15) { mode.SelectedIndex=2; if(!settings.Original || sliders[5].Enabled) throw new Exception("Original selector failed"); }
                 if(testTicks==25) { mode.SelectedIndex=0; if(settings.Enhanced || settings.Original || !sliders[5].Enabled) throw new Exception("V1 revert selector failed"); }
                 if(testTicks==30) { sliders[7].Value=85; if(settings.RoadFrequency!=85 || settings.TextureFrequency!=28) throw new Exception("Independent road pitch failed"); sliders[7].Value=75; }
+                if(testTicks==32) { var before=settings.Copy(); soloChoice.SelectedIndex=1; if(solo!=FeedbackSolo.Bumps || settings.Bumps!=before.Bumps || settings.Texture!=before.Texture) throw new Exception("Solo changed tuning"); }
+                if(testTicks==34) { mode.SelectedIndex=2; if(solo!=FeedbackSolo.All || soloChoice.Items.Count!=3) throw new Exception("Original solo options failed"); soloChoice.SelectedIndex=1; if(solo!=FeedbackSolo.Original) throw new Exception("Original solo routing failed"); }
+                if(testTicks==36) { mode.SelectedIndex=1; if(solo!=FeedbackSolo.All) throw new Exception("Mode switch failed to clear solo"); armed=false; PopulateWheels(new Wheel.Info[0]); if(armed) throw new Exception("Refresh undid STOP"); }
+                if(testTicks==37) {
+                    PopulateControllers(new[]{new ControllerOutput.Info { Id="session:1",Name="Temporary test controller",SupportsRumble=true }});
+                    if(controllerId!="") throw new Exception("Session-only controller selected automatically");
+                    controllers.SelectedIndex=0; if(controllerId!="session:1" || options.ControllerId!="") throw new Exception("Session-only selection persisted");
+                    PopulateControllers(new ControllerOutput.Info[0]);
+                    PopulateControllers(new[]{new ControllerOutput.Info { Id="path:test",Name="Stable test controller",SupportsRumble=true }});
+                    if(controllerId!="path:test" || selected!=Guid.Empty || armed) throw new Exception("Controller-only discovery or STOP latch failed");
+                    options.ControllerId=""; PopulateControllers(new ControllerOutput.Info[0]);
+                }
+                if(testTicks==38) { using(var dialog=new AppOptionsDialog(new AppOptions())) { dialog.Show(this); dialog.Refresh(); using(var bitmap=new Bitmap(dialog.Width,dialog.Height)) { dialog.DrawToBitmap(bitmap,new Rectangle(0,0,dialog.Width,dialog.Height)); bitmap.Save(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"preferences-preview.png")); } dialog.Close(); } }
             }
             lock(gate) {
                 focused=ContainsFocus;
@@ -256,7 +346,7 @@ namespace FarmMotion {
                 if(recorder!=null && recorder.Error!=null) { issue="Recording stopped: "+recorder.Error; recorder.Dispose(); recorder=null; }
                 values.Text=string.Format("Suspension {0:+0.000;-0.000;0.000} m/s   •   Vertical {1:+0.00;-0.00;0.00} m/s²\nPreview {2:+0.00;-0.00;0.00}%   •   Commanded {3:+0.00;-0.00;0.00}%   {4}",suspension,acceleration,preview*100,commanded*100,clipped ? "LIMITING":"");
                 arm.Text=armed ? "Disable output" : "Enable output"; record.Text=recorder==null ? "Record drive" : "Stop recording";
-                status.Text=(replaying ? "REPLAY" : "LIVE")+" • "+vehicle+" • "+(armed ? "Armed" : "Output off")+(recorder!=null ? " • RECORDING" : "")+string.Format(" • Loop {0:0} Hz / longest {1:0.0} ms",outputHz,outputGapMs);
+                status.Text=(replaying ? "REPLAY" : "LIVE")+" • "+vehicle+" • "+(armed ? "Output enabled" : "Output off")+(solo!=FeedbackSolo.All ? " • SOLO: "+solo : "")+(recorder!=null ? " • RECORDING" : "")+string.Format(" • Loop {0:0} Hz / longest {1:0.0} ms",outputHz,outputGapMs);
                 surfaceStatus.Text=feel.SurfaceStatus+(settings.RoadTexture==0 ? " • Road buzz off":"");
                 string nextMessage=issue;
                 if(!testing && receiver!=null && issue=="") nextMessage="Packets "+receiver.Packets+" • Invalid "+receiver.Invalid+" • Connection errors "+receiver.ConnectionErrors+" • Gaps "+receiver.Gaps+" • Last gap "+receiver.LastGap.ToString("0.00")+"s"+(clock.Elapsed.TotalSeconds-receiver.LastPacketTime>.25 ? " • Waiting for telemetry" : "");

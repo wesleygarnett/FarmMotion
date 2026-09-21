@@ -2,22 +2,13 @@
 using System;
 using System.Collections.Generic;
 namespace FarmMotion {
-    public sealed class FeelV2 {
+    internal sealed class FrozenFeelV2 {
         sealed class WheelState { public double Low, Slow; }
         readonly Dictionary<int,WheelState> wheels=new Dictionary<int,WheelState>();
         Sample previous;
         double received=double.NegativeInfinity, gameTime, bump, texture, bodyLow, bodySlow;
         public bool Limited;
         public double Suspension,Acceleration;
-        public bool IsFresh(double now) { return now>=received && now-received<.15; }
-        public RumbleSignal GetRumble(double now,FeelSettings s,FeedbackSolo solo) {
-            if(!IsFresh(now)) return new RumbleSignal();
-            double fade=Math.Min(1,(.15-(now-received))/.05),low=0,high=0;
-            if(FeedbackChannels.Includes(solo,FeedbackSolo.Bumps)) low+=Math.Abs(s.Sensitivity*s.Bumps*bump);
-            if(FeedbackChannels.Includes(solo,FeedbackSolo.Body)) low+=Math.Abs(s.Sensitivity*s.Body*(bodyLow-bodySlow));
-            if(FeedbackChannels.Includes(solo,FeedbackSolo.Texture)) high=Math.Sqrt(s.Sensitivity)*s.Texture*texture;
-            return new RumbleSignal(low*fade,high*fade);
-        }
         static double Filter(double old,double input,double hz,double dt) { return old+(input-old)*(1-Math.Exp(-2*Math.PI*hz*dt)); }
         public void Reset() { wheels.Clear(); previous=null; received=double.NegativeInfinity; gameTime=bump=texture=bodyLow=bodySlow=Suspension=Acceleration=0; Limited=false; }
         public void Push(Sample s,double now) {
@@ -63,19 +54,16 @@ namespace FarmMotion {
         internal static double Compress(double x,double ceiling) {
             return x/Math.Sqrt(1+(x/ceiling)*(x/ceiling));
         }
-        public double Force(double now,FeelSettings s) { return Force(now,s,FeedbackSolo.All); }
-        public double Force(double now,FeelSettings s,FeedbackSolo solo) {
+        public double Force(double now,FeelSettings s) {
             Limited=false; double age=now-received;
             if(age<0 || age>=.15) return 0;
             double fade=Math.Min(1,(.15-age)/.05);
             double movement=s.Sensitivity*(s.Bumps*bump+s.Body*(bodyLow-bodySlow));
-            if(solo!=FeedbackSolo.All) movement=s.Sensitivity*((solo==FeedbackSolo.Bumps ? s.Bumps*bump:0)+(solo==FeedbackSolo.Body ? s.Body*(bodyLow-bodySlow):0));
             // Three non-harmonic components give texture variation rather than one
             // unchanging tone. Timing follows recorded game time for repeatable replays.
             double t=gameTime+age, f=s.TextureFrequency;
             double carrier=.45*Math.Sin(2*Math.PI*f*t)+.35*Math.Sin(2*Math.PI*f*.731*t+1.1)+.2*Math.Sin(2*Math.PI*f*.487*t+2.3);
             double detail=Math.Sqrt(s.Sensitivity)*s.Texture*texture*carrier;
-            if(!FeedbackChannels.Includes(solo,FeedbackSolo.Texture)) detail=0;
             bool hasDetail=s.Texture>0 && texture>.001;
             double baseCap=hasDetail ? .80:1;
             double mixed=Compress(movement,baseCap)+(hasDetail ? Compress(detail,.20):0);

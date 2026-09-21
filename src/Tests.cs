@@ -10,7 +10,18 @@ namespace FarmMotion {
         static void Assert(bool ok,string name) { if(!ok) throw new Exception("FAIL: "+name); count++; Console.WriteLine("PASS: "+name); }
         static Sample S(int seq,double y) { return Sample.Parse("{\"v\":1,\"active\":true,\"session\":\"a\",\"vehicle\":\"1\",\"seq\":"+seq+",\"time\":"+(seq*0.02).ToString(System.Globalization.CultureInfo.InvariantCulture)+",\"wheels\":[{\"i\":1,\"y\":"+y.ToString(System.Globalization.CultureInfo.InvariantCulture)+"}]}"); }
         public static int Run() {
+            var defaults=new FeelSettings(); defaults.Validate(); Assert(defaults.Strength==.5,"New strength defaults to 50 percent");
+            defaults.Strength=1; defaults.Validate(); Assert(defaults.Strength==1,"100 percent strength survives validation");
+            defaults.Strength=2; defaults.Validate(); Assert(defaults.Strength==1,"Strength over full-scale clamps to 100 percent");
+            defaults.Strength=-1; defaults.Validate(); Assert(defaults.Strength==0,"Negative strength clamps to zero");
+            defaults.Strength=double.NaN; defaults.Validate(); Assert(defaults.Strength==.5,"Invalid strength restores 50 percent default");
+            Assert(Wheel.ToMagnitude(0)==0&&Wheel.ToMagnitude(.5)==5000&&Wheel.ToMagnitude(1)==10000&&Wheel.ToMagnitude(-1)==-10000,"Wheel conversion covers zero half and full force in both directions");
+            Assert(Wheel.ToMagnitude(2)==10000&&Wheel.ToMagnitude(-2)==-10000&&Wheel.ToMagnitude(double.NaN)==0&&Wheel.ToMagnitude(double.PositiveInfinity)==0,"Wheel conversion bounds invalid and out of range commands");
             ReleaseTests.Run(Assert);
+            LifecycleTests.Run(Assert);
+            ControllerTests.Run(Assert);
+            CompanionEngineTests.Run(Assert);
+            count+=FeedbackTests.Run();
             var m=new Motion(); m.Push(S(1,0),0); m.Push(S(2,0),0.02); Assert(m.Level(.02)==0,"Stationary vehicle is quiet");
             m.Push(S(3,.004),.04); double small=m.Level(.04); Assert(small>0,"Suspension bump creates vibration");
             m.Reset(); m.Push(S(1,0),0); m.Push(S(2,.008),.02); Assert(m.Level(.02)>small,"Larger movement produces stronger vibration");
@@ -23,7 +34,7 @@ namespace FarmMotion {
             m.Push(Sample.Parse("{\"v\":1,\"active\":false}"),.04); Assert(m.Level(.04)==0,"Pause or vehicle exit stops output");
             m.Reset(); m.Push(S(1,0),0); var wheel=S(2,.01); wheel.Wheels.Clear(); wheel.Wheels[2]=100; m.Push(wheel,.02); Assert(m.Level(.02)==0,"New wheel cannot create a derivative spike");
             bool rejected=false; try { Sample.Parse("{\"v\":1,\"active\":true}"); } catch { rejected=true; } Assert(rejected,"Incomplete active packet rejected");
-            m.Reset(); m.Push(S(1,0),0); m.Push(S(2,.008),.02); bool cap=true; for(int i=20;i<150;i++) cap &= Math.Abs(m.Force(i/1000.0,1))<=.1; Assert(cap,"Output remains capped");
+            m.Reset(); m.Push(S(1,0),0); m.Push(S(2,.008),.02); bool cap=true; for(int i=20;i<150;i++) cap &= Math.Abs(m.Force(i/1000.0,1))<=1; Assert(cap,"Output remains within full-scale cap");
             m.Reset(); m.Sensitivity=.5; m.Push(S(1,0),0); m.Push(S(2,.004),.02); double softer=m.Level(.02);
             m.Reset(); m.Sensitivity=2; m.Push(S(1,0),0); m.Push(S(2,.004),.02); Assert(m.Level(.02)>softer,"Sensitivity adjusts response to the same movement");
             string pipeName="FarmMotionTest-"+Guid.NewGuid().ToString("N");

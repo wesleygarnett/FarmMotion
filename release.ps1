@@ -11,7 +11,10 @@ New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
 $portable = Join-Path $stage 'portable'
 New-Item -ItemType Directory -Path $portable | Out-Null
-foreach ($name in @('FarmMotionUI.exe', 'FarmMotionUI.exe.config', 'FarmMotion.exe', 'FarmMotion.exe.config', 'FS25_FarmMotionTelemetry.zip', 'LICENSE', 'THIRD_PARTY.md', 'README.md')) {
+foreach ($name in @('FarmMotionUI.exe', 'FarmMotionUI.exe.config', 'FarmMotion.exe', 'FarmMotion.exe.config', 'SDL3.dll', 'SDL3-LICENSE.txt', 'FS25_FarmMotionTelemetry.zip', 'LICENSE', 'THIRD_PARTY.md', 'README.md')) {
+    Copy-Item -LiteralPath (Join-Path $stage $name) -Destination $portable
+}
+foreach($name in @('Wpf.Ui.dll','Wpf.Ui.Abstractions.dll','System.Memory.dll','System.Buffers.dll','System.Numerics.Vectors.dll','System.Runtime.CompilerServices.Unsafe.dll','WPF-UI-LICENSE.md','MICROSOFT-RUNTIME-LICENSE.txt')) {
     Copy-Item -LiteralPath (Join-Path $stage $name) -Destination $portable
 }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'CHANGELOG.md'), (Join-Path $PSScriptRoot 'SECURITY.md'), (Join-Path $PSScriptRoot 'CONTRIBUTING.md') -Destination $portable

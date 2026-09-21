@@ -36,7 +36,7 @@ namespace FarmMotion {
         public Wheel() { var iid=new Guid("BF798031-483A-4DA2-AA99-5D64ED369700"); Check(DirectInput8Create(GetModuleHandle(null),0x800,ref iid,out input,IntPtr.Zero),"DirectInput"); }
         public List<Info> List() {
             var list=new List<Info>();
-            EnumCallback callback=delegate(IntPtr p,IntPtr c) { var d=(DeviceInfo)Marshal.PtrToStructure(p,typeof(DeviceInfo)); list.Add(new Info { Id=d.instance,Name=d.productName }); return 1; };
+            EnumCallback callback=delegate(IntPtr p,IntPtr c) { var d=(DeviceInfo)Marshal.PtrToStructure(p,typeof(DeviceInfo)); if((d.type&0xff)!=0x15 && !(d.usagePage==1 && d.usage==5)) list.Add(new Info { Id=d.instance,Name=d.productName }); return 1; };
             Check(Method<EnumDevices>(input,4)(input,4,callback,IntPtr.Zero,0x101),"Enumerate wheels"); GC.KeepAlive(callback); return list;
         }
         public void Open(Guid id) {
@@ -61,11 +61,15 @@ namespace FarmMotion {
             var constant=new Guid("13541C20-8E33-11D0-9AD0-00A0C9A06E35");
             Check(Method<CreateEffect>(device,18)(device,ref constant,ref spec,out effect,IntPtr.Zero),"Create finite force effect");
         }
+        internal static int ToMagnitude(double value) {
+            if(double.IsNaN(value)||double.IsInfinity(value)) return 0;
+            return (int)(Math.Max(-FeelSettings.MaximumStrength,Math.Min(FeelSettings.MaximumStrength,value))*10000);
+        }
         public void Write(double value) {
             if(effect==IntPtr.Zero) return;
             if(double.IsNaN(value)||double.IsInfinity(value)) value=0;
             if(Math.Abs(value)<0.0001) { Check(Method<Simple>(effect,8)(effect),"Stop effect"); return; }
-            Marshal.WriteInt32(magnitude,(int)(Math.Max(-0.10,Math.Min(0.10,value))*10000));
+            Marshal.WriteInt32(magnitude,ToMagnitude(value));
             Check(Method<SetEffect>(effect,6)(effect,ref spec,0x20000100),"Update force");
         }
         public void Dispose() {

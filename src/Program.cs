@@ -72,18 +72,24 @@ namespace FarmMotion {
         }
         [STAThread] static int Main(string[] args) {
             try {
+                if(args.Length>0 && args[0]=="--apply-update") return AppUpdate.Apply(args);
                 if(Array.IndexOf(args,"--self-test")>=0) return Tests.Run();
-                if(args.Length==0 || Array.IndexOf(args,"--gui")>=0 || Array.IndexOf(args,"--ui-test")>=0) {
-                    if(Array.IndexOf(args,"--ui-test")>=0) System.Windows.Forms.Application.SetUnhandledExceptionMode(System.Windows.Forms.UnhandledExceptionMode.ThrowException);
-                    bool owns;
+                if(args.Length==0 || Array.IndexOf(args,"--gui")>=0 || Array.IndexOf(args,"--startup")>=0 || Array.IndexOf(args,"--after-update")>=0 || Array.IndexOf(args,"--ui-test")>=0) {
+                    bool owns; int uiExit=0;
                     using(var mutex=new Mutex(true,Array.IndexOf(args,"--ui-test")>=0 ? "Local\\FarmMotionUITest" : "Local\\FarmMotionCompanion",out owns)) {
-                        if(!owns) throw new InvalidOperationException("FarmMotion is already running.");
-                        try { System.Windows.Forms.Application.EnableVisualStyles(); System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false); System.Windows.Forms.Application.Run(new Dashboard(Array.IndexOf(args,"--ui-test")>=0)); }
+                        if(!owns) { if(Array.IndexOf(args,"--startup")>=0) return 0; throw new InvalidOperationException("FarmMotion is already running."); }
+                        try {
+                            var application=new System.Windows.Application();
+                            application.Resources.MergedDictionaries.Add(new Wpf.Ui.Markup.ThemesDictionary { Theme=Wpf.Ui.Appearance.ApplicationTheme.Dark });
+                            application.Resources.MergedDictionaries.Add(new Wpf.Ui.Markup.ControlsDictionary());
+                            Wpf.Ui.Appearance.ApplicationThemeManager.Apply(Wpf.Ui.Appearance.ApplicationTheme.Dark);
+                            uiExit=application.Run(new WpfDashboard(Array.IndexOf(args,"--ui-test")>=0,Array.IndexOf(args,"--after-update")>=0));
+                        }
                         finally { mutex.ReleaseMutex(); }
                     }
-                    return 0;
+                    return uiExit;
                 }
-                bool enable=false, list=false; Guid id=Guid.Empty; double strength=0.03, sensitivity=1; string log=null;
+                bool enable=false, list=false; Guid id=Guid.Empty; double strength=FeelSettings.DefaultStrength, sensitivity=1; string log=null;
                 for(int i=0;i<args.Length;i++) {
                     if(args[i]=="--enable") enable=true;
                     else if(args[i]=="--monitor") { }
@@ -94,7 +100,7 @@ namespace FarmMotion {
                     else if(args[i]=="--log" && i+1<args.Length) log=args[++i];
                     else throw new ArgumentException("Usage: FarmMotion.exe [--list-wheels | --self-test | --enable --wheel GUID --strength 0.03]");
                 }
-                if(double.IsNaN(strength)||double.IsInfinity(strength)||strength<=0||strength>0.10) throw new ArgumentException("Strength must be greater than zero and at most 0.10");
+                if(double.IsNaN(strength)||double.IsInfinity(strength)||strength<0||strength>FeelSettings.MaximumStrength) throw new ArgumentException("Strength must be between 0 and 1.0");
                 if(double.IsNaN(sensitivity)||double.IsInfinity(sensitivity)||sensitivity<0.25||sensitivity>3) throw new ArgumentException("Sensitivity must be between 0.25 and 3");
                 if(list) { using(var w=new Wheel()) { var devices=w.List(); foreach(var d in devices) Console.WriteLine(d); if(devices.Count==0) Console.WriteLine("No attached force-feedback devices found."); } return 0; }
                 bool owned;
@@ -121,7 +127,7 @@ namespace FarmMotion {
                                 if(!Console.IsInputRedirected && Console.KeyAvailable) {
                                     var key=Console.ReadKey(true);
                                     if(key.Key==ConsoleKey.Escape) break;
-                                    if(key.KeyChar=='+' || key.KeyChar=='=') strength=Math.Min(.10,strength+.005);
+                                    if(key.KeyChar=='+' || key.KeyChar=='=') strength=Math.Min(FeelSettings.MaximumStrength,strength+.005);
                                     if(key.KeyChar=='-') strength=Math.Max(0,strength-.005);
                                     if(key.KeyChar=='[') sensitivity=Math.Max(.25,sensitivity-.25);
                                     if(key.KeyChar==']') sensitivity=Math.Min(3,sensitivity+.25);
@@ -136,7 +142,7 @@ namespace FarmMotion {
                     } finally { if(wheel!=null) wheel.Dispose(); mutex.ReleaseMutex(); }
                 }
                 return 0;
-            } catch(Exception e) { Console.Error.WriteLine(e.Message); return 1; }
+            } catch(Exception e) { Console.Error.WriteLine(e.Message); if(args.Length>0&&args[0]=="--apply-update") System.Windows.Forms.MessageBox.Show("FarmMotion update failed: "+e.Message+"\r\nRestart your existing FarmMotion copy. A backup is retained in the application folder if files were replaced.","FarmMotion update",System.Windows.Forms.MessageBoxButtons.OK,System.Windows.Forms.MessageBoxIcon.Error); return 1; }
         }
     }
 }

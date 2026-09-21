@@ -56,6 +56,15 @@ namespace FarmMotion {
             // A quarter of the previous per-tyre ceiling; keep the layer a fine detail.
             return value*Math.Sin(phase+2*Math.PI*hz*age)*settings.Strength*settings.RoadTexture*.25*Math.Min(1,(.15-age)/.05);
         }
+        // Read the rolling envelope, not the sampled wheel-force carrier. Rumble
+        // motors produce their own vibration and must not alias the 50-90 Hz sine.
+        public double Envelope(double now,FeelSettings settings) {
+            double age=now-received;
+            if(settings.RoadTexture<=0 || age<0 || age>=.15 || wheels.Count==0) return 0;
+            double value=0;
+            foreach(var state in wheels.Values) value+=state.Level;
+            return value/wheels.Count*settings.RoadTexture*.25*Math.Min(1,(.15-age)/.05);
+        }
         public static double Mix(double motion,double detail,double strength) {
             // Preserve large bumps exactly; sacrifice buzz, never rescale the base force.
             double room=Math.Max(0,strength-Math.Abs(motion));

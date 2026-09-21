@@ -81,6 +81,6 @@ namespace FarmMotion {
             envelope = target>envelope ? target : target+(envelope-target)*Math.Exp(-dt/0.07);
         }
         public double Level(double now) { double age=now-received; return age<0 || age>=0.15 ? 0 : envelope*Math.Min(1,(0.15-age)/0.05); }
-        public double Force(double now,double strength) { return Level(now)*Math.Max(0,Math.Min(0.10,strength))*Math.Sin(2*Math.PI*18*now); }
+        public double Force(double now,double strength) { return Level(now)*Math.Max(0,Math.Min(FeelSettings.MaximumStrength,strength))*Math.Sin(2*Math.PI*18*now); }
     }
 }

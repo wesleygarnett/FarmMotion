@@ -7,3 +7,4 @@
 *.xml text eol=lf
 *.png binary
 *.ico binary
+*.dll binary

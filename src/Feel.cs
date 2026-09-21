@@ -6,7 +6,8 @@ using System.IO;
 using System.Web.Script.Serialization;
 namespace FarmMotion {
     public sealed class FeelSettings {
-        public double Strength=.07, Sensitivity=.25, Texture=.20, Bumps=1, Body=.35;
+        public const double DefaultStrength=.50, MaximumStrength=1.0;
+        public double Strength=DefaultStrength, Sensitivity=.25, Texture=.20, Bumps=1, Body=.35;
         public double TextureFrequency=28;
         public double RoadTexture=0, TreadCount=40;
         public double RoadFrequency=75;
@@ -14,7 +15,7 @@ namespace FarmMotion {
         // Missing in older settings files: preserve the existing V1 selection.
         public bool Enhanced=false;
         public void Validate() {
-            Strength=Limit(Strength,0,.1,.07); Sensitivity=Limit(Sensitivity,.25,3,.25);
+            Strength=Limit(Strength,0,MaximumStrength,DefaultStrength); Sensitivity=Limit(Sensitivity,.25,3,.25);
             Texture=Limit(Texture,0,4,.2); Bumps=Limit(Bumps,0,2,1); Body=Limit(Body,0,2,.35);
             TextureFrequency=Limit(TextureFrequency,12,45,28);
             RoadTexture=Limit(RoadTexture,0,.2,0); TreadCount=Limit(TreadCount,20,80,40);
@@ -32,9 +33,12 @@ namespace FarmMotion {
         double received=double.NegativeInfinity, lowWheel, slowWheel, lowBody, dcBody, texture, bump, body;
         public double Suspension, Acceleration;
         public bool Clipped;
+        bool enhancedActive;
+        public bool IsFresh(double now) { return enhancedActive ? enhanced.IsFresh(now) : now>=received && now-received<.15; }
         public void Reset() { previous=null; received=double.NegativeInfinity; lowWheel=slowWheel=lowBody=dcBody=texture=bump=body=Suspension=Acceleration=0; original.Reset(); enhanced.Reset(); road.Reset(); Clipped=false; }
         static double Filter(double previous,double input,double hz,double dt) { return previous+(input-previous)*(1-Math.Exp(-2*Math.PI*hz*dt)); }
         public void Push(Sample s,double now,FeelSettings settings) {
+            enhancedActive=settings.Enhanced && !settings.Original;
             road.Push(s,now,settings);
             if(settings.Enhanced && !settings.Original) { enhanced.Push(s,now); Suspension=enhanced.Suspension; Acceleration=enhanced.Acceleration; return; }
             original.Sensitivity=settings.Sensitivity;
@@ -73,7 +77,34 @@ namespace FarmMotion {
             double baseForce=BaseForce(now,s);
             return RoadTexture.Mix(baseForce,road.Force(now,s),s.Strength);
         }
-        double BaseForce(double now,FeelSettings s) {
+        public double Force(double now,FeelSettings s,FeedbackSolo solo) {
+            if(solo==FeedbackSolo.All) return Force(now,s);
+            Clipped=false;
+            if(solo==FeedbackSolo.Road) return road.Force(now,s);
+            if(s.Original) return solo==FeedbackSolo.Original ? BaseForce(now,s) : 0;
+            if(solo==FeedbackSolo.Original) return 0;
+            if(s.Enhanced) { double force=enhanced.Force(now,s,solo); Clipped=enhanced.Limited; return force; }
+            return BaseForce(now,s,solo);
+        }
+        public RumbleSignal GetRumble(double now,FeelSettings s,FeedbackSolo solo) {
+            double low=0,high=0;
+            if(s.Enhanced && !s.Original) {
+                var value=enhanced.GetRumble(now,s,solo); low=value.Low; high=value.High;
+            } else if(IsFresh(now)) {
+                double fade=Math.Min(1,(.15-(now-received))/.05);
+                if(s.Original) {
+                    if(FeedbackChannels.Includes(solo,FeedbackSolo.Original)) low=original.Level(now);
+                } else {
+                    if(FeedbackChannels.Includes(solo,FeedbackSolo.Bumps)) low+=Math.Abs(s.Sensitivity*s.Bumps*bump)*fade;
+                    if(FeedbackChannels.Includes(solo,FeedbackSolo.Body)) low+=Math.Abs(s.Sensitivity*s.Body*body)*fade;
+                    if(FeedbackChannels.Includes(solo,FeedbackSolo.Texture)) high=Math.Sqrt(s.Sensitivity)*s.Texture*texture*fade;
+                }
+            }
+            if(FeedbackChannels.Includes(solo,FeedbackSolo.Road)) high+=road.Envelope(now,s);
+            return new RumbleSignal(low,high);
+        }
+        double BaseForce(double now,FeelSettings s) { return BaseForce(now,s,FeedbackSolo.All); }
+        double BaseForce(double now,FeelSettings s,FeedbackSolo solo) {
             if(s.Enhanced && !s.Original) { double force=enhanced.Force(now,s); Clipped=enhanced.Limited; return force; }
             double age=now-received; Clipped=false;
             if(age<0 || age>=.15) return 0;
@@ -83,6 +114,7 @@ namespace FarmMotion {
             // amplifying the bump/body channels. Envelope still comes from telemetry.
             double detail=Math.Sqrt(s.Sensitivity)*s.Texture*texture*Math.Sin(2*Math.PI*s.TextureFrequency*now);
             double mixed=s.Sensitivity*(s.Bumps*bump+s.Body*body)+detail;
+            if(solo!=FeedbackSolo.All) mixed=s.Sensitivity*((solo==FeedbackSolo.Bumps ? s.Bumps*bump:0)+(solo==FeedbackSolo.Body ? s.Body*body:0))+(solo==FeedbackSolo.Texture ? detail:0);
             Clipped=Math.Abs(mixed)>1;
             return s.Strength*Math.Max(-1,Math.Min(1,mixed))*fade;
         }

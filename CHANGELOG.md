@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.3.0
+
+- One Enable/Disable output button replaces STOP; disabling resets feedback and stops replay, matching Escape.
+
+- Wheel strength spans 0–100%, defaults to 50%, and reaches the full DirectInput command range; existing saved strengths are preserved.
+
+- Removed processing comparison; desktop startup uses Motion-shaped V2, preserving saved gains and frequencies.
+
+- Windows 11 Fluent dark WPF UI dashboard with Feedback, Devices and Recordings; Basic and Advanced tuning expanders inside Feedback, and the original embedded FM logo.
+- Responsive layout down to 560 × 520 logical pixels, with persistent output controls and vertical scrolling.
+- Compact dark preferences window, version display and existing update/startup controls.
+- Feedback processing extracted into a UI-independent engine; saved tuning and comparison algorithms retained.
+- Asynchronous wheel discovery ignores stale scan results; settings writes stay outside the feedback lock.
+- Bundled WPF UI runtime dependencies and licenses; initial migration from 0.2.0 requires manual extraction.
+
+144 hardware-free checks and WPF layout checks pass. Physical feedback and controller compatibility still require hardware validation.
+
+## 0.2.0
+
+- Independent wheel and controller output, with SDL3 ordinary rumble and separate controller strength.
+- Solo selection for bumps, body movement, fine texture and road buzz without changing saved tuning.
+- Output enabled by default for eligible live gameplay; STOP remains latched and replay stays opt-in.
+- Remembered output devices, capability detection, controller hotplug and independent backend errors.
+- App version in the UI, per-user Windows startup toggle, and GitHub release update controls.
+- Separate application preferences; existing wheel tuning and All-mode processing retained.
+
+Physical controller compatibility, simultaneous game input, real sign-in and updating from a published release require acceptance testing. The bundled mod remains 0.2.0.0; no new mod installation is required for these app features.
+
 ## 0.1.0
 
 First packaged Windows preview release.

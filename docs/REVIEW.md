@@ -1,5 +1,7 @@
 # Release review: 0.1.0
 
+This review records the 0.1.0 release. See [0.3.0 WPF UI validation](DEVELOPMENT_0.3.0.md) for the current interface migration. See [0.2.0 development validation](DEVELOPMENT_0.2.0.md) for the subsequent controller, solo and lifecycle features and their remaining acceptance work.
+
 Scope: C# companion, DirectInput interop, Lua exporter, settings/recordings, build scripts and release packaging. This is a source review plus automated software validation, not an independent security audit or hardware certification.
 
 ## Changes made
