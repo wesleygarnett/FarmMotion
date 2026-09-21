@@ -1,9 +1,23 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
-<modDesc descVersion="92">
+<modDesc descVersion="113">
     <author>Mhytee; FarmMotion contributors</author>
-    <version>0.2.0.0</version>
-    <title><en>FarmMotion Telemetry</en></title>
-    <description><en>Vehicle movement and suspension telemetry for the FarmMotion wheel vibration companion. Adapted from TF4ALL under GPL-2.0-only.</en></description>
-    <multiplayer supported="false"/>
+    <version>1.0.0.0</version>
+    <title><en>FarmMotion Telemetry</en><de>FarmMotion Telemetrie</de></title>
+    <description>
+        <en><![CDATA[Exports local vehicle suspension and movement telemetry to the separate FarmMotion Windows companion for wheel force feedback and controller rumble.
+Requires the free FarmMotion companion running on the same Windows PC. Enable this mod in your save, select your output device in the companion and enable output.
+No in-game hotkeys. Escape disables output when the companion window is focused.
+Telemetry runs only for the local player. Dedicated servers do not connect to the companion.
+GitHub: https://github.com/wesleygarnett/FarmMotion
+Adapted from Mhytee's TF4ALL; GPL-2.0-only. Full license included in the Lua source.]]></en>
+        <de><![CDATA[Überträgt Federungs- und Bewegungsdaten des lokalen Fahrzeugs an das separate Windows-Programm FarmMotion für Lenkrad-Force-Feedback und Controller-Vibration.
+Das kostenlose FarmMotion-Programm muss auf demselben Windows-PC laufen. Die Mod im Spielstand aktivieren, das Ausgabegerät in FarmMotion auswählen und die Ausgabe einschalten.
+Keine Tastenkombinationen im Spiel. Escape schaltet die Ausgabe aus, wenn das FarmMotion-Fenster aktiv ist.
+Die Telemetrie läuft nur für den lokalen Spieler. Dedizierte Server verbinden sich nicht mit FarmMotion.
+GitHub: https://github.com/wesleygarnett/FarmMotion
+Basiert auf TF4ALL von Mhytee; GPL-2.0-only. Vollständige Lizenz im Lua-Quelltext.]]></de>
+    </description>
+    <iconFilename>icon_farmMotion.dds</iconFilename>
+    <multiplayer supported="true"/>
     <extraSourceFiles><sourceFile filename="FarmMotionTelemetry.lua"/></extraSourceFiles>
 </modDesc>

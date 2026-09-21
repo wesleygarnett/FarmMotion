@@ -1,0 +1,114 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testResult>
+    <metaData>
+        <version>0.9.21</version>
+        <builddate>2026-09-08 04:55:53</builddate>
+        <timeofexecution>2026-09-21 00:41:48</timeofexecution>
+        <executionduration>0.099 sec</executionduration>
+        <config>
+            <testdatapath>C:/Users/USER/AppData/Local/Temp/_MEI348482/additionals/FS25_FarmMotionTelemetry_tmp_42104</testdatapath>
+            <gamepath>F:/Games/SteamLibrary/steamapps/common/Farming Simulator 25</gamepath>
+            <output>
+                <directory>C:/Users/USER/AppData/Local/Temp/FarmMotion-ModHub-88UP21/results</directory>
+                <formats>
+                    <format autoopenreport="False">XML</format>
+                    <format autoopenreport="True">HTML</format>
+                </formats>
+            </output>
+        </config>
+    </metaData>
+    <results testrunOutcome="FAIL">
+        <dataCollectorResults outcome="PASS" total="6" failed="0" succeeded="6" />
+        <moduleResults outcome="FAIL" total="15" failed="3" succeeded="12">
+            <testGroup name="DXTCheck" passed="True">
+                <!--no problems found-->
+            </testGroup>
+            <testGroup name="MipMapCheck" passed="True">
+                <!--no problems found-->
+            </testGroup>
+            <testGroup name="TextureCheck" passed="True">
+                <!--no problems found-->
+            </testGroup>
+            <testGroup name="I3DCheck" passed="True">
+                <!--no problems found-->
+            </testGroup>
+            <testGroup name="ModDescCheck" passed="False">
+                <invalidDescVersion>
+                    <error>descVersion '92' outside allowed range</error>
+                    <min>113</min>
+                    <max>113</max>
+                </invalidDescVersion>
+                <missingDescriptionLanguage>
+                    <error>required element modDesc.description.de is missing or empty</error>
+                    <required>en</required>
+                    <required>de</required>
+                </missingDescriptionLanguage>
+                <missingData>
+                    <error>required element modDesc.iconFilename is missing or empty</error>
+                </missingData>
+                <textError>
+                    <error>version number '0.2.0.0' does not match schema 'a.b.c.d' (with 'a' at least 1)</error>
+                </textError>
+                <formatError>
+                    <error>description.en does not use CDATA environment</error>
+                </formatError>
+                <missingChangelog>
+                    <error>description.['en'] seems to be missing a changelog as version indicates it's an update</error>
+                </missingChangelog>
+                <multiplayerSupport>
+                    <error>multiplayer#supported entry is set to false</error>
+                </multiplayerSupport>
+            </testGroup>
+            <descriptionExample name="DescBuilder" />
+            <testGroup name="PreFabCheck" passed="True">
+                <!--no problems found-->
+            </testGroup>
+            <testGroup name="VehicleCheck" passed="True">
+                <!--no problems found-->
+            </testGroup>
+            <testGroup name="PlaceableCheck" passed="True">
+                <!--no problems found-->
+            </testGroup>
+            <testGroup name="MapCheck" passed="True">
+                <!--no problems found-->
+            </testGroup>
+            <testGroup name="SlotCheck" passed="True">
+                <!--no problems found-->
+            </testGroup>
+            <testGroup name="ObsoleteFiles" passed="False">
+                <obsoleteSourceFiles>
+                    <!--the following files are source files and should not be included in the zipped mod-->
+                    <!--allowed formats: .xml, .lua, .dds, .i3d, .shapes, .anim, .ogg, .wav, .gls, .ogv, .gdm, .grle, .cache-->
+                    <obsoleteFile file="FS25_FarmMotionTelemetry_tmp_42104/LICENSE">
+                        <reason>source, cache or unsupported file</reason>
+                    </obsoleteFile>
+                </obsoleteSourceFiles>
+            </testGroup>
+            <testGroup name="PublicLuaCheck" passed="False">
+                <faultyFile file="FS25_FarmMotionTelemetry_tmp_42104/FarmMotionTelemetry.lua">
+                    <violation>60:25: [pcall] pcall/xpcall swallows errors and hides them from the log</violation>
+                    <violation>63:28: [pcall] pcall/xpcall swallows errors and hides them from the log</violation>
+                    <violation>73:29: [pcall] pcall/xpcall swallows errors and hides them from the log</violation>
+                    <violation>79:29: [pcall] pcall/xpcall swallows errors and hides them from the log</violation>
+                    <violation>83:29: [pcall] pcall/xpcall swallows errors and hides them from the log</violation>
+                    <violation>85:37: [pcall] pcall/xpcall swallows errors and hides them from the log</violation>
+                    <violation>101:17: [pcall] pcall/xpcall swallows errors and hides them from the log</violation>
+                    <violation>110:29: [pcall] pcall/xpcall swallows errors and hides them from the log</violation>
+                    <violation>128:20: [pcall] pcall/xpcall swallows errors and hides them from the log</violation>
+                    <violation>132:19: [pcall] pcall/xpcall swallows errors and hides them from the log</violation>
+                    <violation>137:21: [pcall] pcall/xpcall swallows errors and hides them from the log</violation>
+                </faultyFile>
+            </testGroup>
+            <testGroup name="EditorCheck" passed="True">
+                <!--no problems found-->
+                <editorPath>C:/Program Files/GIANTS Software/GIANTS_Editor_10.0.13/editor.exe</editorPath>
+            </testGroup>
+            <testGroup name="ShaderCheckEditor" passed="True">
+                <!--no problems found-->
+                <editorPath>C:/Program Files/GIANTS Software/GIANTS_Editor_10.0.13/editor.exe</editorPath>
+                <!--This particular check is only relevant if you plan to release the mod on consoles.-->
+                <!--If the mod is meant to be released on PC only, you can ignore the warnings.-->
+            </testGroup>
+        </moduleResults>
+    </results>
+</testResult>

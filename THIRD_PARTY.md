@@ -26,3 +26,5 @@ https://gdn.giants-software.com/documentation_scripting_fs25.php?category=91&cla
 
 
 The desktop interface uses **WPF UI 4.3.0** (lepoco, MIT), including Wpf.Ui.Abstractions, and Microsoft .NET runtime support libraries under the MIT license. Pinned binaries and SHA-256 hashes are in vendor/WpfUi; acquisition is documented in scripts/Get-WpfUi.ps1. Builds include WPF-UI-LICENSE.md and MICROSOFT-RUNTIME-LICENSE.txt. Upstream: https://github.com/lepoco/wpfui .
+
+The telemetry mod ZIP embeds the complete upstream LICENSE text in FarmMotionTelemetry.lua, retaining attribution without an unsupported standalone file. The repository and desktop package also retain LICENSE. The separate code-drawn mod icon is a submission placeholder; see assets/README.md.
