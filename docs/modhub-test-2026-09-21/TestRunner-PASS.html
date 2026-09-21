@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>testResult_FS25_FarmMotionTelemetry_tmp_19836_PASS</title>
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22><text y=%2216%22 font-size=%2216%22>✅</text></svg>" >
+    <style>
+        .solution {
+            color: green;
+        }
+        .description {
+            color: green;
+            white-space: pre-line;
+        }
+        .error {
+            color: red;
+        }
+        .warning {
+            color: orange;
+        }
+        .comment {
+            font-style: italic;
+        }
+        .border {
+            border: 1px solid;
+            margin: 5px 20px 10px 25px;
+            padding: 3px;
+        }
+        .checkbox {
+            position: absolute;
+            left: -25px;
+        }
+        div, details {
+            position: relative;
+            padding-left: 25px;
+            color: black;
+        }
+        h4 {
+            margin: 0px;
+        }
+        body div h3 {
+            margin-bottom: 2px;
+        }
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #222;
+                color: #e2e2e2;
+            }
+            div, details {
+                color: #e2e2e2;
+            }
+            .solution, .description {
+                color: #0c0;
+            }
+            .error {
+                color: #e00;
+            }
+        }
+    </style>
+    <script>
+        var curDetailsAreOpen = false
+        function toggleDetailsUnfolded() {
+          var detailElements = document.getElementsByTagName("details");
+          console.log(detailElements.length)
+          curDetailsAreOpen = !curDetailsAreOpen;
+          for (i = 0; i < detailElements.length; i++) {
+            detailElements[i].open = curDetailsAreOpen;
+          }
+          var button = document.getElementById("toggleDetailElementsButton");
+          if (curDetailsAreOpen) {
+            button.innerHTML = "Collapse all detail elements"
+          } else {
+            button.innerHTML = "Unfold all detail elements"
+          }
+        }
+        function isChecked(elem) {
+            const parent = elem.parentNode;
+            if (!parent._defaultColor) {
+                parent._defaultColor = parent.style.color || getComputedStyle(parent).color || "";
+            }
+            parent.style.color = elem.checked ? "#0c0" : parent._defaultColor;
+            saveStates()
+        }
+        function saveStates() {
+            const states = Array.from(document.querySelectorAll("#completed")).map(elem => elem.checked);
+            sessionStorage.setItem("checkboxes", JSON.stringify(states));
+        }
+        function restoreStates() {
+            const raw_states = sessionStorage.getItem("checkboxes");
+            if (!raw_states) return;
+            const states = JSON.parse(raw_states);
+            document.querySelectorAll("#completed").forEach((elem, i) => {
+                elem.checked = !!states[i];
+                isChecked(elem)
+            });
+        }
+        window.addEventListener("DOMContentLoaded", restoreStates);
+    </script>
+</head>
+<body>
+<h1>Test Result</h1>
+<button id="toggleDetailElementsButton" onclick="toggleDetailsUnfolded()">Unfold all detail elements</button>
+<div>
+    <div>
+        <h3> data </h3>
+        <div>version: 0.9.21</div>
+        <div>buildDate: 2026-09-08 04:55:53</div>
+        <div>timeOfExecution: 2026-09-21 01:15:31</div>
+        <div>executionDuration: 0.125 sec</div>
+        <div>config <div>testDataPath: C:/Users/wesle/AppData/Local/Temp/_MEI445122/additionals/FS25_FarmMotionTelemetry_tmp_19836</div>
+            <div>gamePath: F:/Games/SteamLibrary/steamapps/common/Farming Simulator 25</div>
+            <div>output <div>directory: C:/Users/wesle/AppData/Local/Temp/FarmMotion-ModHub-88UP21/final-results</div>
+                <div>formats <div>format: XML (autoOpenReport: False)</div>
+                    <div>format: HTML (autoOpenReport: True)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div>
+        <h3>results  (Testrun Outcome: PASS)</h3>
+        <div>
+            <h3>Data Collector Results  (outcome: PASS, total: 6, failed: 0, succeeded: 6)</h3>
+        </div>
+        <div>
+            <h3>Module Results  (outcome: PASS, total: 15, failed: 0, succeeded: 15)</h3>
+            <div>
+                <h3>test group  (name: DXTCheck, passed: True)</h3>
+                <div class="comment"> no problems found</div>
+            </div>
+            <div>
+                <h3>test group  (name: MipMapCheck, passed: True)</h3>
+                <div class="comment"> no problems found</div>
+            </div>
+            <div>
+                <h3>test group  (name: TextureCheck, passed: True)</h3>
+                <div class="comment"> no problems found</div>
+            </div>
+            <div>
+                <h3>test group  (name: I3DCheck, passed: True)</h3>
+                <div class="comment"> no problems found</div>
+            </div>
+            <div>
+                <h3>test group  (name: ModDescCheck, passed: True)</h3>
+                <div class="comment"> no problems found</div>
+            </div>
+            <div>
+                <h3>description example  (name: DescBuilder)</h3>
+            </div>
+            <div>
+                <h3>test group  (name: PreFabCheck, passed: True)</h3>
+                <div class="comment"> no problems found</div>
+            </div>
+            <div>
+                <h3>test group  (name: VehicleCheck, passed: True)</h3>
+                <div class="comment"> no problems found</div>
+            </div>
+            <div>
+                <h3>test group  (name: PlaceableCheck, passed: True)</h3>
+                <div class="comment"> no problems found</div>
+            </div>
+            <div>
+                <h3>test group  (name: MapCheck, passed: True)</h3>
+                <div class="comment"> no problems found</div>
+            </div>
+            <div>
+                <h3>test group  (name: SlotCheck, passed: True)</h3>
+                <div class="comment"> no problems found</div>
+            </div>
+            <div>
+                <h3>test group  (name: ObsoleteFiles, passed: True)</h3>
+                <div class="comment"> no problems found</div>
+            </div>
+            <div>
+                <h3>test group  (name: PublicLuaCheck, passed: True)</h3>
+                <div class="comment"> no problems found</div>
+            </div>
+            <div>
+                <h3>test group  (name: EditorCheck, passed: True)</h3>
+                <div class="comment"> no problems found</div>
+                <div>Editor Path: C:/Program Files/GIANTS Software/GIANTS_Editor_10.0.13/editor.exe</div>
+            </div>
+            <div>
+                <h3>test group  (name: ShaderCheckEditor, passed: True)</h3>
+                <div class="comment"> no problems found</div>
+                <div>Editor Path: C:/Program Files/GIANTS Software/GIANTS_Editor_10.0.13/editor.exe</div>
+                <div class="comment"> This particular check is only relevant if you plan to release the mod on consoles.</div>
+                <div class="comment"> If the mod is meant to be released on PC only, you can ignore the warnings.</div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

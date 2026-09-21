@@ -1,5 +1,11 @@
 # Changelog
 
+## Telemetry mod 1.0.0.0
+
+- Descriptor 113, English/German descriptions, DDS placeholder icon and embedded full license.
+- Correct local-player vehicle lookup, dedicated-server isolation, visible script failures and explicit pipe reconnect handling.
+- All 15 TestRunner modules and 14 simulated Lua regression tests pass; live multiplayer and submission artwork remain unverified.
+
 ## 0.3.0
 
 - One Enable/Disable output button replaces STOP; disabling resets feedback and stops replay, matching Escape.

@@ -47,7 +47,7 @@ if ($RunUiTests) {
     & (Join-Path $OutputDirectory 'FarmMotion.exe') --ui-test
     if ($LASTEXITCODE -ne 0) { throw 'Dashboard checks failed' }
 }
-$modFiles = @((Join-Path $PSScriptRoot 'mod\FarmMotionTelemetry.lua'), (Join-Path $PSScriptRoot 'mod\modDesc.xml'), (Join-Path $PSScriptRoot 'LICENSE'))
+$modFiles = @((Join-Path $PSScriptRoot 'mod\FarmMotionTelemetry.lua'), (Join-Path $PSScriptRoot 'mod\modDesc.xml'), (Join-Path $PSScriptRoot 'mod\icon_farmMotion.dds'))
 Compress-Archive -LiteralPath $modFiles -DestinationPath (Join-Path $OutputDirectory 'FS25_FarmMotionTelemetry.zip') -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'LICENSE'), (Join-Path $PSScriptRoot 'README.md'), (Join-Path $PSScriptRoot 'THIRD_PARTY.md') -Destination $OutputDirectory -Force
 Write-Host "Built and tested: $OutputDirectory"
