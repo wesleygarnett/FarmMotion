@@ -1,0 +1,21 @@
+name: Bug report
+description: Report a FarmMotion problem
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include reproduction steps and expected behavior. Omit private paths and recordings.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: FarmMotion version
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Windows version, game version, wheel model, display scaling, and whether output was enabled.

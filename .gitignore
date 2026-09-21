@@ -1,0 +1,16 @@
+dist/*
+!dist/.gitkeep
+*.fmr
+*.log
+*.tmp
+*.user
+.vs/
+.idea/
+.codex/
+.agents/
+checkpoints/
+research/
+HANDOFF.md
+FS25_FORCE_FEEDBACK_PLAN.md
+settings.json
+__pycache__/

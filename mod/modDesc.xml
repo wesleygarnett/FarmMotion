@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<modDesc descVersion="92">
+    <author>Mhytee; FarmMotion contributors</author>
+    <version>0.2.0.0</version>
+    <title><en>FarmMotion Telemetry</en></title>
+    <description><en>Vehicle movement and suspension telemetry for the FarmMotion wheel vibration companion. Adapted from TF4ALL under GPL-2.0-only.</en></description>
+    <multiplayer supported="false"/>
+    <extraSourceFiles><sourceFile filename="FarmMotionTelemetry.lua"/></extraSourceFiles>
+</modDesc>

@@ -1,0 +1,11 @@
+# Security
+
+FarmMotion is a local desktop preview. It does not contact a service, download updates, collect analytics, or require administrator privileges. It can command a physical force-feedback device only after output is enabled.
+
+Telemetry uses a Windows named pipe restricted to the current user, with network clients explicitly denied. The pipe is not an authentication boundary against malicious software already running as the same Windows user. Run the game and companion as the same ordinary user.
+
+Telemetry and replay files are untrusted input: packet size and JSON nesting are bounded, numeric values must be finite, and final wheel force is clamped. Recordings should come from a source you trust. Do not publish settings or recordings containing personal information.
+
+For a suspected vulnerability, use the repository's **Security → Report a vulnerability** feature when available. If unavailable on this private repository, contact the owner privately through your existing channel; do not post exploit details or sensitive logs in a public issue.
+
+Version 0.1.x is the currently maintained preview line. No security audit or hardware certification is claimed. Known limitations and validation are documented in [docs/REVIEW.md](docs/REVIEW.md).
