@@ -6,10 +6,10 @@
         <timeofexecution>2026-09-21 01:15:31</timeofexecution>
         <executionduration>0.125 sec</executionduration>
         <config>
-            <testdatapath>C:/Users/wesle/AppData/Local/Temp/_MEI445122/additionals/FS25_FarmMotionTelemetry_tmp_19836</testdatapath>
+            <testdatapath>C:/Users/USER/AppData/Local/Temp/_MEI445122/additionals/FS25_FarmMotionTelemetry_tmp_19836</testdatapath>
             <gamepath>F:/Games/SteamLibrary/steamapps/common/Farming Simulator 25</gamepath>
             <output>
-                <directory>C:/Users/wesle/AppData/Local/Temp/FarmMotion-ModHub-88UP21/final-results</directory>
+                <directory>C:/Users/USER/AppData/Local/Temp/FarmMotion-ModHub-88UP21/final-results</directory>
                 <formats>
                     <format autoopenreport="False">XML</format>
                     <format autoopenreport="True">HTML</format>

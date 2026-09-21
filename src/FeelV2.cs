@@ -16,7 +16,7 @@ namespace FarmMotion {
             if(FeedbackChannels.Includes(solo,FeedbackSolo.Bumps)) low+=Math.Abs(s.Sensitivity*s.Bumps*bump);
             if(FeedbackChannels.Includes(solo,FeedbackSolo.Body)) low+=Math.Abs(s.Sensitivity*s.Body*(bodyLow-bodySlow));
             if(FeedbackChannels.Includes(solo,FeedbackSolo.Texture)) high=Math.Sqrt(s.Sensitivity)*s.Texture*texture;
-            return new RumbleSignal(low*fade,high*fade);
+            return new RumbleSignal(ShapeMovement(low,s.ResponseCurve)*fade,Math.Min(high,s.TextureLimit)*fade);
         }
         static double Filter(double old,double input,double hz,double dt) { return old+(input-old)*(1-Math.Exp(-2*Math.PI*hz*dt)); }
         public void Reset() { wheels.Clear(); previous=null; received=double.NegativeInfinity; gameTime=bump=texture=bodyLow=bodySlow=Suspension=Acceleration=0; Limited=false; }
@@ -59,7 +59,11 @@ namespace FarmMotion {
             bodyLow=Filter(bodyLow,bodyInput,2.5,dt); bodySlow=Filter(bodySlow,bodyInput,.4,dt);
             Suspension=raw; Acceleration=accel;
         }
-        // Unity slope for small signals, smoothly compressing peaks without hard clipping.
+        // Preserve sign and full-scale impacts while reducing smaller movement.
+        internal static double ShapeMovement(double x,double exponent) {
+            return Math.Sign(x)*Math.Pow(Math.Min(1,Math.Abs(x)),exponent);
+        }
+        // Soft ceiling for continuous detail.
         internal static double Compress(double x,double ceiling) {
             return x/Math.Sqrt(1+(x/ceiling)*(x/ceiling));
         }
@@ -76,10 +80,11 @@ namespace FarmMotion {
             double carrier=.45*Math.Sin(2*Math.PI*f*t)+.35*Math.Sin(2*Math.PI*f*.731*t+1.1)+.2*Math.Sin(2*Math.PI*f*.487*t+2.3);
             double detail=Math.Sqrt(s.Sensitivity)*s.Texture*texture*carrier;
             if(!FeedbackChannels.Includes(solo,FeedbackSolo.Texture)) detail=0;
-            bool hasDetail=s.Texture>0 && texture>.001;
-            double baseCap=hasDetail ? .80:1;
-            double mixed=Compress(movement,baseCap)+(hasDetail ? Compress(detail,.20):0);
-            Limited=Math.Abs(movement)>baseCap || (hasDetail && Math.Abs(detail)>.20);
+            double shaped=ShapeMovement(movement,s.ResponseCurve);
+            // Impacts own the full range; texture uses only remaining headroom.
+            double detailCap=Math.Min(s.TextureLimit,Math.Max(0,1-Math.Abs(shaped)));
+            double mixed=shaped+(detailCap>0 ? Compress(detail,detailCap):0);
+            Limited=Math.Abs(movement)>1 || Math.Abs(detail)>detailCap;
             return s.Strength*Math.Max(-1,Math.Min(1,mixed))*fade;
         }
     }

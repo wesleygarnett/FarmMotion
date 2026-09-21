@@ -13,15 +13,17 @@ using System.Security.Principal;
 namespace FarmMotion {
     sealed class Receiver : IDisposable {
         readonly object gate=new object(); readonly Stopwatch clock;
-        readonly string pipeName;
+        readonly string pipeName, markerPath;
+        public string RestartMarkerError="";
         NamedPipeServerStream pipe;
+        bool markerPublished;
         volatile bool done; public readonly Motion Motion=new Motion();
         public int Packets, Invalid, ConnectionErrors;
         public int Gaps;
         public double LastPacketTime=double.NegativeInfinity, LastGap;
         public string LastError = "none";
         public event Action<Sample,string,double> SampleReceived;
-        public Receiver(Stopwatch timer, string name="FarmMotionTelemetry") { clock=timer; pipeName=name; new Thread(Listen) { IsBackground=true }.Start(); }
+        public Receiver(Stopwatch timer, string name="FarmMotionTelemetry", string restartMarkerPath=null) { clock=timer; pipeName=name; markerPath=restartMarkerPath ?? (name=="FarmMotionTelemetry" ? TelemetryRestartMarker.DefaultPath:null); new Thread(Listen) { IsBackground=true }.Start(); }
         internal static PipeSecurity LocalPipeSecurity() {
             var security=new PipeSecurity(); security.SetAccessRuleProtection(true,false);
             security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.NetworkSid,null),PipeAccessRights.FullControl,AccessControlType.Deny));
@@ -33,6 +35,10 @@ namespace FarmMotion {
                 try {
                     using(var incoming=new NamedPipeServerStream(pipeName,PipeDirection.In,1,PipeTransmissionMode.Byte,PipeOptions.None,16384,0,LocalPipeSecurity())) {
                         lock(gate) { if(done) return; pipe=incoming; }
+                        if(markerPath!=null && !markerPublished) {
+                            try { TelemetryRestartMarker.Publish(markerPath); markerPublished=true; RestartMarkerError=""; }
+                            catch(Exception e) { RestartMarkerError="Automatic reconnect unavailable: "+e.Message; }
+                        }
                         incoming.WaitForConnection();
                         using(var reader=new StreamReader(incoming,Encoding.UTF8,false,4096)) {
                             var line=new StringBuilder(); int c;
