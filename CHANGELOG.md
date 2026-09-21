@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.1
+
+- One public app executable: FarmMotion.exe opens the WPF interface. Console diagnostics move to developer-only FarmMotion.Diagnostics.exe.
+- Release packaging and updater validate the single-executable layout.
+- Upgrading from 0.4.0 or earlier requires a manual download into a fresh folder; saved tuning is preserved. Update shortcuts and re-enable Start with Windows in the new app if used.
+
+
 ## 0.4.0 beta candidate / telemetry mod 1.0.0.2
 
 - App-instance marker restores mod reconnects after app restarts without relying on IO error returns. Live restart validation remains pending.

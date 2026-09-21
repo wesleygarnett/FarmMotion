@@ -1,4 +1,4 @@
-param([string]$AppPath=(Join-Path $PSScriptRoot '..\dist\beta-0.4.0\FarmMotionUI.exe'))
+param([string]$AppPath=(Join-Path $PSScriptRoot '..\dist\beta-0.4.0\FarmMotion.exe'))
 $ErrorActionPreference='Stop'
 $assembly=[Reflection.Assembly]::LoadFrom($AppPath)
 $type=$assembly.GetType('FarmMotion.Receiver')

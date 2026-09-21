@@ -36,15 +36,15 @@ $wpfFramework=Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\WPF'
 foreach($nameWpf in @('PresentationFramework.dll','PresentationCore.dll','WindowsBase.dll')) { $common+=('/r:'+(Join-Path $wpfFramework $nameWpf)) }
 $common+='/r:System.Xaml.dll'
 $common+=('/resource:'+(Join-Path $PSScriptRoot 'assets\farmmotion.png')+',FarmMotion.Logo.png')
-foreach ($target in @(@{Name='FarmMotion'; Type='exe'}, @{Name='FarmMotionUI'; Type='winexe'})) {
+foreach ($target in @(@{Name='FarmMotion'; Type='winexe'}, @{Name='FarmMotion.Diagnostics'; Type='exe'})) {
     & $compiler @common "/target:$($target.Type)" "/out:$OutputDirectory\$($target.Name).exe" @sources
     if ($LASTEXITCODE -ne 0) { throw "$($target.Name) compilation failed" }
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'src\App.config') -Destination (Join-Path $OutputDirectory "$($target.Name).exe.config") -Force
 }
-& (Join-Path $OutputDirectory 'FarmMotion.exe') --self-test
+& (Join-Path $OutputDirectory 'FarmMotion.Diagnostics.exe') --self-test
 if ($LASTEXITCODE -ne 0) { throw 'Tests failed' }
 if ($RunUiTests) {
-    & (Join-Path $OutputDirectory 'FarmMotion.exe') --ui-test
+    & (Join-Path $OutputDirectory 'FarmMotion.Diagnostics.exe') --ui-test
     if ($LASTEXITCODE -ne 0) { throw 'Dashboard checks failed' }
 }
 $modFiles = @((Join-Path $PSScriptRoot 'mod\FarmMotionTelemetry.lua'), (Join-Path $PSScriptRoot 'mod\modDesc.xml'), (Join-Path $PSScriptRoot 'mod\icon_farmMotion.dds'))

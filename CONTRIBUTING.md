@@ -13,3 +13,5 @@ Keep feedback behavior changes separate from UI/packaging changes. Preserve the 
 For a pull request, describe the user-visible change, the checks run, and any hardware testing still needed. Do not commit personal settings, recordings, device identifiers, game logs or session notes. Contributions are under GPL-2.0-only; preserve upstream attribution.
 
 Release steps are in [RELEASING.md](docs/RELEASING.md).
+
+Developer builds include FarmMotion.Diagnostics.exe for --self-test, --ui-test and console diagnostics. User releases contain only the windowed FarmMotion.exe. The diagnostic executable is excluded from downloadable app ZIPs.

@@ -35,11 +35,11 @@ namespace FarmMotion {
                 }
                 using(var bytes=new MemoryStream()) { using(var zip=new ZipArchive(bytes,ZipArchiveMode.Create,true)) { zip.CreateEntry("FarmMotion.exe"); zip.CreateEntry("farmmotion.exe"); } bool blocked=false; try { AppUpdate.Extract(bytes.ToArray(),Path.Combine(temp,"duplicate")); } catch(IOException) { blocked=true; } assert(blocked,"Updater rejects duplicate case-insensitive archive paths"); }
                 using(var bytes=new MemoryStream()) {
-                    using(var zip=new ZipArchive(bytes,ZipArchiveMode.Create,true)) foreach(string name in new[]{"FarmMotion.exe","FarmMotionUI.exe","FarmMotion.exe.config","FarmMotionUI.exe.config","SDL3.dll","SDL3-LICENSE.txt","Wpf.Ui.dll","Wpf.Ui.Abstractions.dll","System.Memory.dll","System.Buffers.dll","System.Numerics.Vectors.dll","System.Runtime.CompilerServices.Unsafe.dll","WPF-UI-LICENSE.md","MICROSOFT-RUNTIME-LICENSE.txt"}) {
+                    using(var zip=new ZipArchive(bytes,ZipArchiveMode.Create,true)) foreach(string name in new[]{"FarmMotion.exe","FarmMotion.exe.config","SDL3.dll","SDL3-LICENSE.txt","Wpf.Ui.dll","Wpf.Ui.Abstractions.dll","System.Memory.dll","System.Buffers.dll","System.Numerics.Vectors.dll","System.Runtime.CompilerServices.Unsafe.dll","WPF-UI-LICENSE.md","MICROSOFT-RUNTIME-LICENSE.txt"}) {
                         using(var input=File.OpenRead(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,name))) using(var output=zip.CreateEntry(name).Open()) input.CopyTo(output);
                     }
                     string verified=Path.Combine(temp,"actual-package"); AppUpdate.Extract(bytes.ToArray(),verified); AppUpdate.ValidateVersion(verified,AppVersion.Display);
-                    assert(File.Exists(Path.Combine(verified,"SDL3.dll")),"Actual compiled app package extracts and passes executable version validation");
+                    assert(File.Exists(Path.Combine(verified,"SDL3.dll"))&&Directory.GetFiles(verified,"*.exe").Length==1,"Single-executable app package extracts and passes executable version validation");
                     bool wrongVersion=false; try { AppUpdate.ValidateVersion(verified,"999.0.0"); } catch(IOException) { wrongVersion=true; } assert(wrongVersion,"Updater rejects release and executable version mismatch");
                 }
                 string target=Path.Combine(temp,"target"),payload=Path.Combine(temp,"payload"); Directory.CreateDirectory(target); Directory.CreateDirectory(payload); File.WriteAllText(Path.Combine(target,"FarmMotion.exe"),"old"); File.WriteAllText(Path.Combine(payload,"FarmMotion.exe"),"new"); File.WriteAllText(Path.Combine(payload,"SDL3.dll"),"new dll");
