@@ -41,7 +41,14 @@ namespace FarmMotion {
                             var line=new StringBuilder(); int c;
                             while(!done && (c=reader.Read())>=0) {
                                 if(c=='\n') {
-                                    lock(gate) { try { var sample=Sample.Parse(line.ToString()); double now=clock.Elapsed.TotalSeconds; if(Packets>0 && now-LastPacketTime>.25) { Gaps++; LastGap=now-LastPacketTime; } LastPacketTime=now; Motion.Push(sample,now); Packets++; if(SampleReceived!=null) SampleReceived(sample,line.ToString(),now); } catch(Exception e) { Invalid++; LastError="Packet: "+e.Message; Motion.Reset(); } }
+                                    string json=line.ToString(); Sample sample=null; double now=0; Action<Sample,string,double> received=null;
+                                    lock(gate) {
+                                        try { sample=Sample.Parse(json); now=clock.Elapsed.TotalSeconds; if(Packets>0 && now-LastPacketTime>.25) { Gaps++; LastGap=now-LastPacketTime; } LastPacketTime=now; Motion.Push(sample,now); Packets++; received=SampleReceived; }
+                                        catch(Exception e) { Invalid++; LastError="Packet: "+e.Message; Motion.Reset(); }
+                                    }
+                                    // Consumers can perform storage or UI work. Keep them outside the
+                                    // receiver lock, and do not misclassify their failures as bad telemetry.
+                                    if(sample!=null && received!=null) try { received(sample,json,now); } catch(Exception e) { lock(gate) LastError="Telemetry consumer: "+e.Message; }
                                     line.Length=0;
                                 } else { line.Append((char)c); if(line.Length>16384) throw new IOException("Packet too long"); }
                             }
