@@ -101,7 +101,7 @@ GPL-2.0-only. The Lua exporter is adapted from Mhytee's Trueforce-For-All v0.2.6
 
 ## ModHub validation
 
-The bundled telemetry mod is now 1.0.0.2 (descriptor 113) and passes all 15 GIANTS TestRunner modules. See [fixes and remaining submission work](TESTING.md). Local-player multiplayer isolation is implemented but real multiplayer playtesting remains outstanding. The mod icon is a code-drawn placeholder, not approved ModHub artwork. Reinstall the bundled telemetry ZIP to use the updated exporter.
+The bundled telemetry mod is now 1.0.0.3 (descriptor 113) and passes all 15 GIANTS TestRunner modules. See [fixes and remaining submission work](TESTING.md). Local-player multiplayer isolation is implemented but real multiplayer playtesting remains outstanding. The mod icon is a code-drawn placeholder, not approved ModHub artwork. Reinstall the bundled telemetry ZIP to use the updated exporter.
 
 ### Gentle driving with strong impacts
 
@@ -113,6 +113,6 @@ To tune dynamic range, turn texture and road buzz off and solo bumps. Adjust sen
 
 ### App restart recovery
 
-Use app 0.4.0 or later with mod 1.0.0.2 or later. The app atomically writes farmMotionReceiver.txt in Documents/My Games/FarmingSimulator2025 when its receiver starts. The mod checks the instance token about once per second of game updates and reconnects only when it changes. A paused game resumes checking when updates resume. No gameplay data is stored in the marker.
+Use app 0.4.2 or later with mod 1.0.0.3 or later. Update both: close FS25 once to replace the mod ZIP, then launch the updated app and game. Saved app settings carry over.
 
-For a custom FS25 profile, set the FARMMOTION_FS25_PROFILE environment variable to the profile folder before launching FarmMotion; it must match the game's getUserProfileAppPath. A missing or unwritable profile produces an Automatic reconnect unavailable status. Existing telemetry still works; resolve the path/permissions or restart the game if a silent pipe failure occurs.
+The mod checks a local named pipe for the app instance token about once per second of game updates and reconnects when it changes. A paused game resumes checking when updates resume. This works independently of the game installation or profile location, without writing to Documents or changing Windows security settings. The old FARMMOTION_FS25_PROFILE setting is no longer needed. Run the app and game under the same Windows user.

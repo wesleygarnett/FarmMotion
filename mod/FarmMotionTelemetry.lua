@@ -117,10 +117,10 @@ function FarmMotionTelemetry:checkReceiver(dt)
     ctx.markerElapsed=(ctx.markerElapsed or 1000)+dt
     if ctx.markerElapsed < 1000 then return end
     ctx.markerElapsed=0
-    if type(getUserProfileAppPath) ~= "function" then return end
-    local file=io.open(getUserProfileAppPath().."farmMotionReceiver.txt","r")
+    -- Same-user local discovery pipe: no profile folder or file-write access needed.
+    local file=io.open(ctx.pipeName.."Session","r")
     if file == nil then return end
-    local value=file:read(64)
+    local value=file:read(33)
     file:close()
     -- Only accept complete, bounded tokens; missing/partial reads keep the old one.
     if type(value) ~= "string" or #value ~= 33 or value:sub(33) ~= "\n" then return end

@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="113">
     <author>Mhytee; FarmMotion contributors</author>
-    <version>1.0.0.2</version>
+    <version>1.0.0.3</version>
     <title><en>FarmMotion Telemetry</en><de>FarmMotion Telemetrie</de></title>
     <description>
         <en><![CDATA[Exports local vehicle suspension and movement telemetry to the separate FarmMotion Windows companion for wheel force feedback and controller rumble.
 Requires the free FarmMotion companion running on the same Windows PC. Enable this mod in your save, select your output device in the companion and enable output.
 No in-game hotkeys. Escape disables output when the companion window is focused.
 Telemetry runs only for the local player. Dedicated servers do not connect to the companion.
+Changelog 1.0.0.3: Restart detection no longer requires access to the game profile folder.
 Changelog 1.0.0.2: Reconnect when the companion restarts, even if pipe errors are silent.
 Changelog 1.0.0.1: Fixed telemetry disconnects when file operations return no value.
 GitHub: https://github.com/wesleygarnett/FarmMotion
@@ -16,6 +17,7 @@ Adapted from Mhytee's TF4ALL; GPL-2.0-only. Full license included in the Lua sou
 Das kostenlose FarmMotion-Programm muss auf demselben Windows-PC laufen. Die Mod im Spielstand aktivieren, das Ausgabegerät in FarmMotion auswählen und die Ausgabe einschalten.
 Keine Tastenkombinationen im Spiel. Escape schaltet die Ausgabe aus, wenn das FarmMotion-Fenster aktiv ist.
 Die Telemetrie läuft nur für den lokalen Spieler. Dedizierte Server verbinden sich nicht mit FarmMotion.
+Changelog 1.0.0.3: Neustarterkennung ohne Zugriff auf den Spielprofilordner.
 Changelog 1.0.0.2: Neuverbindung nach einem Neustart des Begleitprogramms.
 Changelog 1.0.0.1: Telemetrie-Abbrüche bei Dateioperationen ohne Rückgabewert behoben.
 GitHub: https://github.com/wesleygarnett/FarmMotion

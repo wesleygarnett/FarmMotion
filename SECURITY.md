@@ -10,4 +10,4 @@ For a suspected vulnerability, use the repository's **Security → Report a vuln
 
 Version 0.4.x is the currently maintained preview line. No security audit or hardware certification is claimed. Known limitations and validation are documented in [docs/TESTING.md](docs/TESTING.md).
 
-The companion writes a random instance token to farmMotionReceiver.txt in the FS25 profile. The mod polls this local file to detect app restarts; it contains no credentials or gameplay data. Marker failures are shown in telemetry status and leave explicit-error reconnect handling available.
+The companion exposes a random instance token through a second local named pipe with the same current-user restriction. The mod polls this pipe to detect app restarts. No credentials or gameplay data are included, and restart discovery does not read or write the FS25 profile folder.

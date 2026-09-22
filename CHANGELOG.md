@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.2 / telemetry mod 1.0.0.3
+
+- Replace the Documents restart marker with a local named pipe, fixing the reconnect error when Controlled Folder Access blocks profile writes.
+- Restart discovery works without a game installation/profile path or security exception. Update both app and mod; saved tuning and feedback processing are unchanged.
+- Add real Windows pipe coverage for repeated discovery, app restarts and stalled clients.
+
+
 ## 0.4.1
 
 - One public app executable: FarmMotion.exe opens the WPF interface. Console diagnostics move to developer-only FarmMotion.Diagnostics.exe.
