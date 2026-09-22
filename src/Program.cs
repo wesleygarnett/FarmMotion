@@ -13,17 +13,17 @@ using System.Security.Principal;
 namespace FarmMotion {
     sealed class Receiver : IDisposable {
         readonly object gate=new object(); readonly Stopwatch clock;
-        readonly string pipeName, markerPath;
-        public string RestartMarkerError="";
+        readonly string pipeName, discoveryName;
+        TelemetryDiscovery discovery;
+        public string RestartMarkerError { get { return discovery==null ? "":discovery.Error; } }
         NamedPipeServerStream pipe;
-        bool markerPublished;
         volatile bool done; public readonly Motion Motion=new Motion();
         public int Packets, Invalid, ConnectionErrors;
         public int Gaps;
         public double LastPacketTime=double.NegativeInfinity, LastGap;
         public string LastError = "none";
         public event Action<Sample,string,double> SampleReceived;
-        public Receiver(Stopwatch timer, string name="FarmMotionTelemetry", string restartMarkerPath=null) { clock=timer; pipeName=name; markerPath=restartMarkerPath ?? (name=="FarmMotionTelemetry" ? TelemetryRestartMarker.DefaultPath:null); new Thread(Listen) { IsBackground=true }.Start(); }
+        public Receiver(Stopwatch timer, string name="FarmMotionTelemetry", string restartDiscoveryName=null) { clock=timer; pipeName=name; discoveryName=restartDiscoveryName ?? name+"Session"; new Thread(Listen) { IsBackground=true }.Start(); }
         internal static PipeSecurity LocalPipeSecurity() {
             var security=new PipeSecurity(); security.SetAccessRuleProtection(true,false);
             security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.NetworkSid,null),PipeAccessRights.FullControl,AccessControlType.Deny));
@@ -35,10 +35,7 @@ namespace FarmMotion {
                 try {
                     using(var incoming=new NamedPipeServerStream(pipeName,PipeDirection.In,1,PipeTransmissionMode.Byte,PipeOptions.None,16384,0,LocalPipeSecurity())) {
                         lock(gate) { if(done) return; pipe=incoming; }
-                        if(markerPath!=null && !markerPublished) {
-                            try { TelemetryRestartMarker.Publish(markerPath); markerPublished=true; RestartMarkerError=""; }
-                            catch(Exception e) { RestartMarkerError="Automatic reconnect unavailable: "+e.Message; }
-                        }
+                        lock(gate) { if(done) return; if(discovery==null) discovery=new TelemetryDiscovery(discoveryName); }
                         incoming.WaitForConnection();
                         using(var reader=new StreamReader(incoming,Encoding.UTF8,false,4096)) {
                             var line=new StringBuilder(); int c;
@@ -59,7 +56,7 @@ namespace FarmMotion {
         public double Level(double now) { lock(gate) return Motion.Level(now); }
         public void SetSensitivity(double value) { lock(gate) Motion.Sensitivity=value; }
         public string Status(double now) { lock(gate) return string.Format("Packets: {0}  Invalid: {1}  Connection errors: {2}  Movement: {3:0.000}  Last error: {4}",Packets,Invalid,ConnectionErrors,Motion.Level(now),LastError); }
-        public void Dispose() { lock(gate) { done=true; if(pipe!=null) pipe.Dispose(); Motion.Reset(); } }
+        public void Dispose() { lock(gate) { done=true; if(discovery!=null) discovery.Dispose(); if(pipe!=null) pipe.Dispose(); Motion.Reset(); } }
     }
     static class Program {
         [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();

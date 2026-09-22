@@ -27,7 +27,7 @@ def setup():
             flush=function(self) return true end,
             close=function(self) closed=closed+1; return true end
         }
-        io.open=function() opens=opens+1; return fakeFile end
+        io.open=function(name,mode) if mode=='r' then return nil end; opens=opens+1; return fakeFile end
     """)
     lua.execute(script)
     return lua
@@ -45,7 +45,7 @@ l=setup();l.execute("g_currentMission.isPaused=true; listener:update(16)")
 check(not json.loads(l.eval("writes[1]"))["active"],"pause exports inactive telemetry")
 l=setup();l.execute("g_gui.getIsGuiVisible=function() return true end; listener:update(16)")
 check(not json.loads(l.eval("writes[1]"))["active"],"menu exports inactive telemetry")
-l=setup();l.execute("io.open=function() opens=opens+1; return nil,'not running' end; for i=1,10 do listener:update(16) end")
+l=setup();l.execute("io.open=function(name,mode) if mode=='r' then return nil end; opens=opens+1; return nil,'not running' end; for i=1,10 do listener:update(16) end")
 check(l.eval("opens")==1 and l.eval("#warnings")==0,"missing companion retries without log spam")
 l=setup();l.execute("fakeFile.write=function() return nil,'disconnected' end; listener:update(16); listener:update(16)")
 check(l.eval("closed")==1 and l.eval("opens")==1 and l.eval("#warnings")==1,"write failure closes pipe and rate-limits reconnect")
@@ -79,7 +79,7 @@ def marker_setup():
         io.open=function(name,mode)
             if mode=='r' then
                 if marker==nil then return nil end
-                return {read=function(self,size) assert(size==64); return marker end,close=function() end}
+                return {read=function(self,size) assert(size==33); return marker end,close=function() end}
             end
             return openPipe(name,mode)
         end
